@@ -7,8 +7,8 @@ vertex_t :: struct {
 }
 
 renderer_t :: struct {
-	vao, vbo: u32,
-	shader:   shader_t,
+	vao, vbo, ebo: u32,
+	shader:        shader_t,
 }
 
 shader_t :: struct {
@@ -16,14 +16,25 @@ shader_t :: struct {
 }
 
 renderer_init :: proc(r: ^renderer_t) {
-	vertices: [3]vertex_t = {{{-0.5, -0.5, 0.0}}, {{0.5, -0.5, 0.0}}, {{0.0, 0.5, 0.0}}}
+	vertices: [4]vertex_t = {
+		{{0.5, 0.5, 0.0}},
+		{{0.5, -0.5, 0.0}},
+		{{-0.5, -0.5, 0.0}},
+		{{-0.5, 0.5, 0.0}},
+	}
+
+	indices: [6]u32 = {0, 1, 3, 1, 2, 3}
+
 	gl.GenVertexArrays(1, &r.vao)
 	gl.BindVertexArray(r.vao)
-
 
 	gl.GenBuffers(1, &r.vbo)
 	gl.BindBuffer(gl.ARRAY_BUFFER, r.vbo)
 	gl.BufferData(gl.ARRAY_BUFFER, size_of(vertices), &vertices, gl.STATIC_DRAW)
+
+	gl.GenBuffers(1, &r.ebo) 
+	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, r.ebo)
+	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, size_of(indices), &indices, gl.STATIC_DRAW)
 
 	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 3 * size_of(f32), 0)
 	gl.EnableVertexAttribArray(0)
@@ -47,12 +58,13 @@ renderer_init :: proc(r: ^renderer_t) {
 	gl.AttachShader(r.shader.program, r.shader.frag)
 	gl.LinkProgram(r.shader.program)
 
+	gl.PolygonMode(gl.FRONT_AND_BACK, gl.LINE)
 }
 renderer_draw :: proc(r: ^renderer_t) {
 	gl.UseProgram(r.shader.program)
 
 	gl.BindVertexArray(r.vao)
-	gl.DrawArrays(gl.TRIANGLES, 0, 3)
+	gl.DrawElements(gl.TRIANGLES, 6, gl.UNSIGNED_INT, nil)
 }
 
 renderer_deinit :: proc(r: ^renderer_t) {
