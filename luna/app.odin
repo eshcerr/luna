@@ -1,6 +1,7 @@
 package main
 
 import "core:fmt"
+import "core:image/png"
 import "core:strings"
 
 import gl "vendor:OpenGL"
@@ -49,7 +50,7 @@ app_run :: proc(app: ^app_t) {
 		)
 		gl.Clear(gl.COLOR_BUFFER_BIT)
 
-		renderer_draw(&renderer)
+		renderer_draw(&renderer, &texture, &shader)
 		app.draw_cb()
 	}
 }
@@ -94,13 +95,22 @@ app_init :: proc(app: ^app_t) {
 	fmt.println("luna initialisation completed")
 	app.init_cb()
 
-	renderer = {}
-	renderer_init(&renderer)
+	renderer = renderer_init()
+	shader = shader_init("luna/shader.vert.glsl", "luna/shader.frag.glsl")
+	err: png.Error
+	car_sprite, err = png.load_from_file("luna/car.png")
+	texture = texture_init(car_sprite)
 }
+
+car_sprite: ^png.Image
+texture: texture_t
+shader: shader_t
 
 @(private = "file")
 app_deinit :: proc(app: ^app_t) {
 	renderer_deinit(&renderer)
+	shader_deinit(&shader)
+	texture_deinit(&texture)
 	app.deinit_cb()
 	glfw.Terminate()
 }

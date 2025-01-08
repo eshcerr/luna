@@ -12,7 +12,7 @@ shader_t :: struct {
 
 shader_init :: proc(vertexPath: string, fragmentPath: string) -> shader_t {
 	vert := shader_compile(vertexPath, gl.VERTEX_SHADER)
-	frag := shader_compile(vertexPath, gl.FRAGMENT_SHADER)
+	frag := shader_compile(fragmentPath, gl.FRAGMENT_SHADER)
 
 	defer gl.DeleteShader(vert)
 	defer gl.DeleteShader(frag)
@@ -24,12 +24,18 @@ shader_init :: proc(vertexPath: string, fragmentPath: string) -> shader_t {
 	gl.LinkProgram(program)
 
 	link_success: i32
-	gl.GetShaderiv(program, gl.LINK_STATUS, &(link_success))
+	gl.GetProgramiv(program, gl.LINK_STATUS, &(link_success))
 
 	if (link_success == 0) {
-		log: string
-		gl.GetProgramInfoLog(program, 512, nil, raw_data(log))
-		fmt.println("shader linking failed: {s}", log)
+		info_length: i32
+		gl.GetProgramiv(program, gl.INFO_LOG_LENGTH, &(info_length))
+
+		info_log := make([]u8, info_length)
+		defer delete(info_log)
+
+		gl.GetProgramInfoLog(program, info_length, nil, &info_log[0])
+
+		fmt.println("program link failed ", info_log)
 	}
 
 	return shader_t{program}
@@ -37,26 +43,37 @@ shader_init :: proc(vertexPath: string, fragmentPath: string) -> shader_t {
 
 shader_compile :: proc(path: string, type: u32) -> (shader: u32) {
 	content, read_success := os.read_entire_file(path)
-	if (!read_success) {
-		fmt.println("error reading content of {s}", path)
+	if (read_success == false) {
+		fmt.println("error reading content of ", path)
 		return 0
 	}
 
-	source := strings.unsafe_string_to_cstring(string(content))
+	source := cstring(raw_data(content))
 
 	shader = gl.CreateShader(type)
 	gl.ShaderSource(shader, 1, &source, nil)
+    gl.CompileShader(shader)
 
-	compile_success: i32
-	gl.GetShaderiv(shader, gl.COMPILE_STATUS, &(compile_success))
+	status: i32
+	gl.GetShaderiv(shader, gl.COMPILE_STATUS, &(status))
 
-	if (compile_success == 0) {
-		log: string
-		gl.GetShaderInfoLog(shader, 512, nil, raw_data(log))
-		fmt.println("shader compilation failed: {s}", log)
-		return 0
-	}
-	return
+	if status != 0 do return
+
+	info_length: i32
+	gl.GetShaderiv(shader, gl.INFO_LOG_LENGTH, &(info_length))
+	fmt.println(info_length)
+    
+	info_log := make([]u8, info_length)
+	defer delete(info_log)
+
+	gl.GetShaderInfoLog(shader, info_length, nil, &info_log[0])
+
+	fmt.println("shader compilation failed ", info_log)
+	return 0
+}
+
+shader_deinit :: proc(shader: ^shader_t) {
+	gl.DeleteProgram(shader.program)
 }
 
 shader_use :: proc(shader: ^shader_t) {
