@@ -111,6 +111,7 @@ app_deinit :: proc(app: ^app_t) {
 	renderer_deinit(&renderer)
 	shader_deinit(&shader)
 	texture_deinit(&texture)
+	png.destroy(car_sprite)
 	app.deinit_cb()
 	glfw.Terminate()
 }
