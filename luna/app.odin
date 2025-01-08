@@ -11,12 +11,12 @@ GL_MAJOR_VERSION :: 4
 GL_MINOR_VERSION :: 6
 
 app_t :: struct {
-	setup_cb:  proc(),
-	init_cb:   proc(),
-	event_cb:  proc(),
-	update_cb: proc(),
-	draw_cb:   proc(),
-	deinit_cb: proc(),
+	setup_cb:  proc(app: ^app_t),
+	init_cb:   proc(app: ^app_t),
+	event_cb:  proc(app: ^app_t),
+	update_cb: proc(app: ^app_t),
+	draw_cb:   proc(app: ^app_t),
+	deinit_cb: proc(app: ^app_t),
 	title:     string,
 	window:    window_t,
 }
@@ -40,7 +40,7 @@ app_run :: proc(app: ^app_t) {
 		glfw.SwapBuffers((app.window.handle))
 		glfw.PollEvents()
 
-		app.update_cb()
+		app.update_cb(app)
 
 		gl.ClearColor(
 			app.window.bg_color.r,
@@ -51,7 +51,7 @@ app_run :: proc(app: ^app_t) {
 		gl.Clear(gl.COLOR_BUFFER_BIT)
 
 		renderer_draw(&renderer, &texture, &shader)
-		app.draw_cb()
+		app.draw_cb(app)
 	}
 }
 
@@ -69,7 +69,7 @@ app_setup :: proc(app: ^app_t) {
 		return
 	}
 
-	app.setup_cb()
+	app.setup_cb(app)
 }
 
 @(private = "file")
@@ -93,7 +93,7 @@ app_init :: proc(app: ^app_t) {
 	gl.Viewport(0, 0, app.window.width, app.window.height)
 
 	fmt.println("luna initialisation completed")
-	app.init_cb()
+	app.init_cb(app)
 
 	renderer = renderer_init()
 	shader = shader_init("luna/shader.vert.glsl", "luna/shader.frag.glsl")
@@ -112,7 +112,7 @@ app_deinit :: proc(app: ^app_t) {
 	shader_deinit(&shader)
 	texture_deinit(&texture)
 	png.destroy(car_sprite)
-	app.deinit_cb()
+	app.deinit_cb(app)
 	glfw.Terminate()
 }
 
