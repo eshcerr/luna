@@ -21,14 +21,16 @@ app_t :: struct {
 }
 
 window_t :: struct {
-	width:            i32,
-	height:           i32,
+	width:    i32,
+	height:   i32,
 	bg_color: [4]f32,
-	handle:           glfw.WindowHandle,
+	handle:   glfw.WindowHandle,
 }
 
+renderer: renderer_t
+
 app_run :: proc(app: ^app_t) {
-	_app = app;
+	//_app = app
 	app_setup(app)
 	app_init(app)
 	defer app_deinit(app)
@@ -47,8 +49,9 @@ app_run :: proc(app: ^app_t) {
 		)
 		gl.Clear(gl.COLOR_BUFFER_BIT)
 
+		renderer_draw(&renderer)
 		app.draw_cb()
-	} 
+	}
 }
 
 @(private = "file")
@@ -90,10 +93,14 @@ app_init :: proc(app: ^app_t) {
 
 	fmt.println("luna initialisation completed")
 	app.init_cb()
+
+	renderer = {}
+	renderer_init(&renderer)
 }
 
 @(private = "file")
 app_deinit :: proc(app: ^app_t) {
+	renderer_deinit(&renderer)
 	app.deinit_cb()
 	glfw.Terminate()
 }
