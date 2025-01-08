@@ -12,7 +12,7 @@ renderer_t :: struct {
 	vao, vbo, ebo: u32,
 }
 
-renderer_init :: proc() -> (r: renderer_t) {
+renderer_init :: proc() -> (r: renderer_t = {}) {
 	vertices: [4]vertex_t = {
 		{{0.5, 0.5, 0.0}, {1.0, 1.0, 1.0, 1.0}, {0.0, 0.0}},
 		{{0.5, -0.5, 0.0}, {1.0, 1.0, 1.0, 1.0}, {0.0, 1.0}},
@@ -21,8 +21,6 @@ renderer_init :: proc() -> (r: renderer_t) {
 	}
 
 	indices: [6]u32 = {0, 1, 3, 1, 2, 3}
-
-	r = {}
 
 	gl.Enable(gl.BLEND)
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)

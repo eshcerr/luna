@@ -8,8 +8,7 @@ texture_t :: struct {
 	id: u32,
 }
 
-texture_init :: proc(image: ^png.Image) -> (t: texture_t) {
-	t = {}
+texture_init :: proc(image: ^png.Image) -> (t: texture_t = {}) {
 	gl.GenTextures(1, &t.id)
 	gl.BindTexture(gl.TEXTURE_2D, t.id)
 

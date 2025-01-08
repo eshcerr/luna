@@ -10,35 +10,34 @@ shader_t :: struct {
 	program: u32,
 }
 
-shader_init :: proc(vertexPath: string, fragmentPath: string) -> shader_t {
+shader_init :: proc(vertexPath, fragmentPath: string) -> (s: shader_t = {}) {
 	vert := shader_compile(vertexPath, gl.VERTEX_SHADER)
 	frag := shader_compile(fragmentPath, gl.FRAGMENT_SHADER)
 
 	defer gl.DeleteShader(vert)
 	defer gl.DeleteShader(frag)
 
-	program := gl.CreateProgram()
+	s.program = gl.CreateProgram()
 
-	gl.AttachShader(program, vert)
-	gl.AttachShader(program, frag)
-	gl.LinkProgram(program)
+	gl.AttachShader(s.program, vert)
+	gl.AttachShader(s.program, frag)
+	gl.LinkProgram(s.program)
 
 	link_success: i32
-	gl.GetProgramiv(program, gl.LINK_STATUS, &(link_success))
+	gl.GetProgramiv(s.program, gl.LINK_STATUS, &(link_success))
 
 	if (link_success == 0) {
 		info_length: i32
-		gl.GetProgramiv(program, gl.INFO_LOG_LENGTH, &(info_length))
+		gl.GetProgramiv(s.program, gl.INFO_LOG_LENGTH, &(info_length))
 
 		info_log := make([]u8, info_length)
 		defer delete(info_log)
 
-		gl.GetProgramInfoLog(program, info_length, nil, &info_log[0])
+		gl.GetProgramInfoLog(s.program, info_length, nil, &info_log[0])
 
 		fmt.println("program link failed ", info_log)
 	}
-
-	return shader_t{program}
+	return
 }
 
 shader_compile :: proc(path: string, type: u32) -> (shader: u32) {
