@@ -4,7 +4,7 @@ import gl "vendor:OpenGL"
 
 vertex_t :: struct {
 	pos:   [3]f32,
-	color: [3]f32,
+	color: [4]f32,
 	uv:    [2]f32,
 }
 
@@ -14,15 +14,18 @@ renderer_t :: struct {
 
 renderer_init :: proc() -> (r: renderer_t) {
 	vertices: [4]vertex_t = {
-		{{0.5, 0.5, 0.0}, {1.0, 1.0, 1.0}, {0.0, 0.0}},
-		{{0.5, -0.5, 0.0}, {1.0, 1.0, 1.0}, {0.0, 1.0}},
-		{{-0.5, -0.5, 0.0}, {1.0, 1.0, 1.0}, {1.0, 1.0}},
-		{{-0.5, 0.5, 0.0}, {1.0, 1.0, 1.0}, {1.0, 0.0}},
+		{{0.5, 0.5, 0.0}, {1.0, 1.0, 1.0, 1.0}, {0.0, 0.0}},
+		{{0.5, -0.5, 0.0}, {1.0, 1.0, 1.0, 1.0}, {0.0, 1.0}},
+		{{-0.5, -0.5, 0.0}, {1.0, 1.0, 1.0, 1.0}, {1.0, 1.0}},
+		{{-0.5, 0.5, 0.0}, {1.0, 1.0, 1.0, 1.0}, {1.0, 0.0}},
 	}
 
 	indices: [6]u32 = {0, 1, 3, 1, 2, 3}
 
 	r = {}
+
+	gl.Enable(gl.BLEND)
+	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 
 	gl.GenVertexArrays(1, &r.vao)
 	gl.BindVertexArray(r.vao)
@@ -35,15 +38,15 @@ renderer_init :: proc() -> (r: renderer_t) {
 	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, r.ebo)
 	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, size_of(indices), &indices, gl.STATIC_DRAW)
 
-	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 8 * size_of(f32), 0)
+	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 9 * size_of(f32), 0)
 	gl.EnableVertexAttribArray(0)
-	gl.VertexAttribPointer(1, 3, gl.FLOAT, false, 8 * size_of(f32), 3 * size_of(f32))
+	gl.VertexAttribPointer(1, 4, gl.FLOAT, false, 9 * size_of(f32), 3 * size_of(f32))
 	gl.EnableVertexAttribArray(1)
-	gl.VertexAttribPointer(2, 2, gl.FLOAT, false, 8 * size_of(f32), 6 * size_of(f32))
+	gl.VertexAttribPointer(2, 2, gl.FLOAT, false, 9 * size_of(f32), 7 * size_of(f32))
 	gl.EnableVertexAttribArray(2)
 
 	//gl.PolygonMode(gl.FRONT_AND_BACK, gl.LINE)
-	return 
+	return
 }
 
 renderer_draw :: proc(r: ^renderer_t, t: ^texture_t, s: ^shader_t) {
