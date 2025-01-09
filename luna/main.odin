@@ -25,8 +25,10 @@ setup :: proc(app: ^app_t) {
 }
 
 init :: proc(app: ^app_t) {
+	mode := glfw.GetVideoMode(glfw.GetPrimaryMonitor())
+
 	glfw.SetWindowPos(app.window.handle, 0, -1)
-	glfw.SetWindowSize(app.window.handle, 1920, 1081)
+	glfw.SetWindowSize(app.window.handle, mode.width, mode.height + 1)
 }
 update :: proc(app: ^app_t) {}
 draw :: proc(app: ^app_t) {}

@@ -1,6 +1,8 @@
 package main
 
 import gl "vendor:OpenGL"
+import "core:math/linalg"
+import "core:strings"
 
 vertex_t :: struct {
 	pos:   [3]f32,
@@ -10,6 +12,7 @@ vertex_t :: struct {
 
 renderer_t :: struct {
 	vao, vbo, ebo: u32,
+	transform: linalg.Matrix4f32
 }
 
 renderer_init :: proc() -> (r: renderer_t = {}) {
@@ -42,7 +45,9 @@ renderer_init :: proc() -> (r: renderer_t = {}) {
 	gl.EnableVertexAttribArray(1)
 	gl.VertexAttribPointer(2, 2, gl.FLOAT, false, 9 * size_of(f32), 7 * size_of(f32))
 	gl.EnableVertexAttribArray(2)
-
+	
+	r.transform = linalg.identity_matrix(linalg.Matrix4f32)
+	r.transform *= linalg.matrix4_scale_f32(linalg.Vector3f32{1, 2, 1})
 	//gl.PolygonMode(gl.FRONT_AND_BACK, gl.LINE)
 	return
 }
@@ -50,6 +55,7 @@ renderer_init :: proc() -> (r: renderer_t = {}) {
 renderer_draw :: proc(r: ^renderer_t, t: ^texture_t, s: ^shader_t) {
 	shader_use(s)
 	gl.BindTexture(gl.TEXTURE_2D, t.id)
+	gl.UniformMatrix4fv(gl.GetUniformLocation(shader.program, strings.clone_to_cstring("transform")), 1, false, &r.transform[0][0])
 
 	gl.BindVertexArray(r.vao)
 	gl.DrawElements(gl.TRIANGLES, 6, gl.UNSIGNED_INT, nil)
