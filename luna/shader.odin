@@ -36,7 +36,8 @@ shader_init :: proc(vertexPath, fragmentPath: string) -> (s: shader_t = {}) {
 		gl.GetProgramInfoLog(s.program, info_length, nil, &info_log[0])
 
 		fmt.println("program link failed ", info_log)
-	}
+        assert(0)
+    }
 	return
 }
 
@@ -44,7 +45,7 @@ shader_compile :: proc(path: string, type: u32) -> (shader: u32) {
 	content, read_success := os.read_entire_file(path)
 	if (read_success == false) {
 		fmt.println("error reading content of ", path)
-		return 0
+		assert(0)
 	}
 
 	source := cstring(raw_data(content))
@@ -68,7 +69,7 @@ shader_compile :: proc(path: string, type: u32) -> (shader: u32) {
 	gl.GetShaderInfoLog(shader, info_length, nil, &info_log[0])
 
 	fmt.println("shader compilation failed ", info_log)
-	return 0
+	assert(0)
 }
 
 shader_deinit :: proc(shader: ^shader_t) {
