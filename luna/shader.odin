@@ -31,11 +31,11 @@ shader_init :: proc(vertexSource, fragmentSource: string) -> (s: shader_t = {}) 
 		gl.GetProgramiv(s.program, gl.INFO_LOG_LENGTH, &(info_length))
 
 		info_log := make([]u8, info_length)
+        defer delete(info_log)
 
 		gl.GetProgramInfoLog(s.program, info_length, nil, &info_log[0])
 
 		fmt.println("program link failed ", info_log)
-        delete(info_log)
         assert(false, "program link failed")
     }
 	return
@@ -58,11 +58,11 @@ shader_compile :: proc(source: string, type: u32) -> (shader: u32) {
 	fmt.println(info_length)
     
 	info_log := make([]u8, info_length)
+    defer delete(info_log)
 
 	gl.GetShaderInfoLog(shader, info_length, nil, &info_log[0])
 
 	fmt.println("shader compilation failed ", info_log)
-    delete(info_log)
     assert(false, "shader compilation failed")
     return 0
 }
