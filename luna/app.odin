@@ -96,7 +96,7 @@ app_init :: proc(app: ^app_t) {
 	app.init_cb(app)
 
 	renderer = renderer_init()
-	shader = shader_init("luna/shader.vert.glsl", "luna/shader.frag.glsl")
+	shader = shader_init(#load("shader.vert.glsl"), #load("shader.frag.glsl"))
 	err: png.Error
 	car_sprite, err = png.load_from_file("luna/car.png")
 	texture = texture_init(car_sprite)
