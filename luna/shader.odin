@@ -10,9 +10,9 @@ shader_t :: struct {
 	program: u32,
 }
 
-shader_init :: proc(vertexPath, fragmentPath: string) -> (s: shader_t = {}) {
-	vert := shader_compile(vertexPath, gl.VERTEX_SHADER)
-	frag := shader_compile(fragmentPath, gl.FRAGMENT_SHADER)
+shader_init :: proc(vertexSource, fragmentSource: string) -> (s: shader_t = {}) {
+	vert := shader_compile(vertexSource, gl.VERTEX_SHADER)
+	frag := shader_compile(fragmentSource, gl.FRAGMENT_SHADER)
 
 	defer gl.DeleteShader(vert)
 	defer gl.DeleteShader(frag)
@@ -31,26 +31,21 @@ shader_init :: proc(vertexPath, fragmentPath: string) -> (s: shader_t = {}) {
 		gl.GetProgramiv(s.program, gl.INFO_LOG_LENGTH, &(info_length))
 
 		info_log := make([]u8, info_length)
-		defer delete(info_log)
+        defer delete(info_log)
 
 		gl.GetProgramInfoLog(s.program, info_length, nil, &info_log[0])
 
 		fmt.println("program link failed ", info_log)
-	}
+        assert(false, "program link failed")
+    }
 	return
 }
 
-shader_compile :: proc(path: string, type: u32) -> (shader: u32) {
-	content, read_success := os.read_entire_file(path)
-	if (read_success == false) {
-		fmt.println("error reading content of ", path)
-		return 0
-	}
-
-	source := cstring(raw_data(content))
-
-	shader = gl.CreateShader(type)
-	gl.ShaderSource(shader, 1, &source, nil)
+shader_compile :: proc(source: string, type: u32) -> (shader: u32) {
+    csource := strings.clone_to_cstring(source) 
+    shader = gl.CreateShader(type)
+	
+    gl.ShaderSource(shader, 1, &csource, nil)
     gl.CompileShader(shader)
 
 	status: i32
@@ -63,12 +58,13 @@ shader_compile :: proc(path: string, type: u32) -> (shader: u32) {
 	fmt.println(info_length)
     
 	info_log := make([]u8, info_length)
-	defer delete(info_log)
+    defer delete(info_log)
 
 	gl.GetShaderInfoLog(shader, info_length, nil, &info_log[0])
 
 	fmt.println("shader compilation failed ", info_log)
-	return 0
+    assert(false, "shader compilation failed")
+    return 0
 }
 
 shader_deinit :: proc(shader: ^shader_t) {

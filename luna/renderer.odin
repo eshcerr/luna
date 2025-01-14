@@ -47,7 +47,7 @@ renderer_init :: proc() -> (r: renderer_t = {}) {
 	gl.EnableVertexAttribArray(2)
 	
 	r.transform = linalg.identity_matrix(linalg.Matrix4f32)
-	r.transform *= linalg.matrix4_scale_f32(linalg.Vector3f32{1, 2, 1})
+	r.transform *= linalg.matrix4_scale_f32(linalg.Vector3f32{1, 1, 1})
 	//gl.PolygonMode(gl.FRONT_AND_BACK, gl.LINE)
 	return
 }
