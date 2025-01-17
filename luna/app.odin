@@ -1,7 +1,6 @@
 package main
 
 import "core:fmt"
-import "core:image/png"
 import "core:strings"
 
 import gl "vendor:OpenGL"
