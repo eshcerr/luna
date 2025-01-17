@@ -16,6 +16,10 @@ main :: proc() {
 	app_run(&app)
 }
 
+car_sprite: ^png.Image
+texture: texture_t
+shader: shader_t
+
 setup :: proc(app: ^app_t) {
 	glfw.WindowHint(glfw.TRANSPARENT_FRAMEBUFFER, true)
 	glfw.WindowHint(glfw.AUTO_ICONIFY, false)
@@ -29,7 +33,23 @@ init :: proc(app: ^app_t) {
 
 	glfw.SetWindowPos(app.window.handle, 0, -1)
 	glfw.SetWindowSize(app.window.handle, mode.width, mode.height + 1)
+
+	renderer = renderer_init()
+	shader = shader_init(#load("shader.vert.glsl"), #load("shader.frag.glsl"))
+	err: png.Error
+	car_sprite, err = png.load_from_file("luna/car.png")
+	texture = texture_init(car_sprite)
 }
+
 update :: proc(app: ^app_t) {}
-draw :: proc(app: ^app_t) {}
-deinit :: proc(app: ^app_t) {}
+
+draw :: proc(app: ^app_t) {
+	renderer_draw(&renderer, &texture, &shader)
+}
+
+deinit :: proc(app: ^app_t) {
+	renderer_deinit(&renderer)
+	shader_deinit(&shader)
+	texture_deinit(&texture)
+	png.destroy(car_sprite)
+}

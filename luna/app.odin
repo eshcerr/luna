@@ -50,7 +50,6 @@ app_run :: proc(app: ^app_t) {
 		)
 		gl.Clear(gl.COLOR_BUFFER_BIT)
 
-		renderer_draw(&renderer, &texture, &shader)
 		app.draw_cb(app)
 	}
 }
@@ -94,24 +93,10 @@ app_init :: proc(app: ^app_t) {
 
 	fmt.println("luna initialisation completed")
 	app.init_cb(app)
-
-	renderer = renderer_init()
-	shader = shader_init(#load("shader.vert.glsl"), #load("shader.frag.glsl"))
-	err: png.Error
-	car_sprite, err = png.load_from_file("luna/car.png")
-	texture = texture_init(car_sprite)
 }
-
-car_sprite: ^png.Image
-texture: texture_t
-shader: shader_t
 
 @(private = "file")
 app_deinit :: proc(app: ^app_t) {
-	renderer_deinit(&renderer)
-	shader_deinit(&shader)
-	texture_deinit(&texture)
-	png.destroy(car_sprite)
 	app.deinit_cb(app)
 	glfw.Terminate()
 }
