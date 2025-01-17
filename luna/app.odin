@@ -1,4 +1,4 @@
-package main
+package luna
 
 import "core:fmt"
 import "core:strings"
@@ -27,10 +27,8 @@ window_t :: struct {
 	handle:   glfw.WindowHandle,
 }
 
-renderer: renderer_t
 
 app_run :: proc(app: ^app_t) {
-	//_app = app
 	app_setup(app)
 	app_init(app)
 	defer app_deinit(app)
@@ -84,6 +82,7 @@ app_init :: proc(app: ^app_t) {
 		fmt.println("failed to create window")
 		return
 	}
+
 	glfw.MakeContextCurrent(app.window.handle)
 	glfw.SwapInterval(0)
 

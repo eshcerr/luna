@@ -1,4 +1,4 @@
-package main
+package luna
 
 import gl "vendor:OpenGL"
 import "core:math/linalg"

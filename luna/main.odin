@@ -1,4 +1,4 @@
-package main
+package luna
 
 import "vendor:glfw"
 import "core:image/png"
@@ -16,6 +16,8 @@ main :: proc() {
 
 	app_run(&app)
 }
+
+renderer: renderer_t
 
 car_sprite: ^png.Image
 texture: texture_t
