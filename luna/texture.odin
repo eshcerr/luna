@@ -1,14 +1,13 @@
 package luna
 
 import "core:fmt"
-import "core:image/png"
 import gl "vendor:OpenGL"
 
 texture_t :: struct {
 	id: u32,
 }
 
-texture_init :: proc(image: ^png.Image) -> (t: texture_t = {}) {
+texture_init :: proc(sprite: ^sprite_t) -> (t: texture_t = {}) {
 	gl.GenTextures(1, &t.id)
 	gl.BindTexture(gl.TEXTURE_2D, t.id)
 
@@ -21,12 +20,12 @@ texture_init :: proc(image: ^png.Image) -> (t: texture_t = {}) {
 		gl.TEXTURE_2D,
 		0,
 		gl.RGBA,
-		i32(image.width),
-		i32(image.height),
+		i32(sprite.width),
+		i32(sprite.height),
 		0,
 		gl.RGBA,
 		gl.UNSIGNED_BYTE,
-		raw_data(image.pixels.buf),
+		&sprite.data[0],
     )
     
 	gl.GenerateMipmap(gl.TEXTURE_2D)

@@ -1,7 +1,6 @@
 package luna
 
 import "vendor:glfw"
-import "core:image/png"
 
 main :: proc() {
 	app := app_t {
@@ -19,37 +18,24 @@ main :: proc() {
 
 renderer: renderer_t
 
-car_sprite: ^png.Image
+car_sprite: sprite_t
 texture: texture_t
 shader: shader_t
 
-setup :: proc(app: ^app_t) {
-	// transparent windows
-	//glfw.WindowHint(glfw.TRANSPARENT_FRAMEBUFFER, true)
-	//glfw.WindowHint(glfw.AUTO_ICONIFY, false)
-	//glfw.WindowHint(glfw.SCALE_FRAMEBUFFER, false)
-	//
-	//glfw.WindowHint(glfw.DECORATED, false)
-}
+setup :: proc(app: ^app_t) {}
 
 init :: proc(app: ^app_t) {
-	//mode := glfw.GetVideoMode(glfw.GetPrimaryMonitor())
-
-	//glfw.SetWindowPos(app.window.handle, 0, -1)
-	//glfw.SetWindowSize(app.window.handle, mode.width, mode.height + 1)
-
 	renderer = renderer_init()
 	shader = shader_init("luna/shader.vert.glsl", "luna/shader.frag.glsl")
-	err: png.Error
-	car_sprite, err = png.load_from_file("luna/car.png")
-	texture = texture_init(car_sprite)
+	car_sprite = sprite_from_png("luna/car.png")
+	texture = texture_init(&car_sprite)
 }
 
 deinit :: proc(app: ^app_t) {
 	renderer_deinit(&renderer)
 	shader_deinit(&shader)
 	texture_deinit(&texture)
-	png.destroy(car_sprite)
+	sprite_deinit(&car_sprite)
 }
 
 update :: proc(app: ^app_t) {}
