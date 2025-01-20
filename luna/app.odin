@@ -27,6 +27,11 @@ window_t :: struct {
 	handle:   glfw.WindowHandle,
 }
 
+delta_time: f64 = 0
+@(private = "file")
+current_frame: f64 = 0
+@(private = "file")
+last_frame: f64 = 0
 
 app_run :: proc(app: ^app_t) {
 	app_setup(app)
@@ -34,6 +39,11 @@ app_run :: proc(app: ^app_t) {
 	defer app_deinit(app)
 
 	for (!glfw.WindowShouldClose(app.window.handle)) {
+		current_frame = glfw.GetTime()
+		delta_time = current_frame - last_frame
+		last_frame = current_frame
+		fmt.println(60.0 / delta_time)
+
 		glfw.SwapBuffers((app.window.handle))
 		glfw.PollEvents()
 
@@ -89,8 +99,8 @@ app_init :: proc(app: ^app_t) {
 	gl.load_up_to(GL_MAJOR_VERSION, GL_MINOR_VERSION, glfw.gl_set_proc_address)
 	gl.Viewport(0, 0, app.window.width, app.window.height)
 
-	glfw.SetKeyCallback(app.window.handle, )
-	
+	//glfw.SetKeyCallback(app.window.handle)
+
 
 	fmt.println("luna initialisation completed")
 	app.init_cb(app)
