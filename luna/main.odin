@@ -1,19 +1,14 @@
 package luna
 
 import "vendor:glfw"
+running: bool = false
 
 main :: proc() {
-	app := app_t {
-		title = "luna",
-		setup_cb = setup,
-		init_cb = init,
-		update_cb = update,
-		draw_cb = draw,
-		deinit_cb = deinit,
-		window = {width = 800, height = 600, bg_color = {0.3, 0.0, 0.2, 1.0}},
+	running = window_create(1200, 720, "luna")
+	for {
+		if running == false {break}
+		window_update()
 	}
-
-	app_run(&app)
 }
 
 renderer: renderer_t
@@ -41,5 +36,5 @@ deinit :: proc(app: ^app_t) {
 update :: proc(app: ^app_t) {}
 
 draw :: proc(app: ^app_t) {
-	renderer_draw(&renderer, &texture, &shader)
+	//renderer_draw(&renderer, &texture, &shader)
 }
