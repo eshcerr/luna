@@ -39,7 +39,7 @@ init :: proc(app: ^app_t) {
 	//glfw.SetWindowSize(app.window.handle, mode.width, mode.height + 1)
 
 	renderer = renderer_init()
-	shader = shader_init(#load("shader.vert.glsl"), #load("shader.frag.glsl"))
+	shader = shader_init("luna/shader.vert.glsl", "luna/shader.frag.glsl")
 	err: png.Error
 	car_sprite, err = png.load_from_file("luna/car.png")
 	texture = texture_init(car_sprite)

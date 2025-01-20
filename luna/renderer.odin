@@ -33,11 +33,11 @@ renderer_init :: proc() -> (r: renderer_t = {}) {
 
 	gl.GenBuffers(1, &r.vbo)
 	gl.BindBuffer(gl.ARRAY_BUFFER, r.vbo)
-	gl.BufferData(gl.ARRAY_BUFFER, size_of(vertices), &vertices, gl.STATIC_DRAW)
+	gl.BufferData(gl.ARRAY_BUFFER, size_of(vertex_t) * 4, &vertices, gl.STATIC_DRAW)
 
 	gl.GenBuffers(1, &r.ebo)
 	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, r.ebo)
-	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, size_of(indices), &indices, gl.STATIC_DRAW)
+	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, size_of(u32) * 6, &indices, gl.STATIC_DRAW)
 
 	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 9 * size_of(f32), 0)
 	gl.EnableVertexAttribArray(0)

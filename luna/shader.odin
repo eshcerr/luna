@@ -10,61 +10,11 @@ shader_t :: struct {
 	program: u32,
 }
 
-shader_init :: proc(vertexSource, fragmentSource: string) -> (s: shader_t = {}) {
-	vert := shader_compile(vertexSource, gl.VERTEX_SHADER)
-	frag := shader_compile(fragmentSource, gl.FRAGMENT_SHADER)
-
-	defer gl.DeleteShader(vert)
-	defer gl.DeleteShader(frag)
-
-	s.program = gl.CreateProgram()
-
-	gl.AttachShader(s.program, vert)
-	gl.AttachShader(s.program, frag)
-	gl.LinkProgram(s.program)
-
-	link_success: i32
-	gl.GetProgramiv(s.program, gl.LINK_STATUS, &(link_success))
-
-	if (link_success == 0) {
-		info_length: i32
-		gl.GetProgramiv(s.program, gl.INFO_LOG_LENGTH, &(info_length))
-
-		info_log := make([]u8, info_length)
-        defer delete(info_log)
-
-		gl.GetProgramInfoLog(s.program, info_length, nil, &info_log[0])
-
-		fmt.println("program link failed ", info_log)
-        assert(false, "program link failed")
-    }
-	return
-}
-
-shader_compile :: proc(source: string, type: u32) -> (shader: u32) {
-    csource := strings.clone_to_cstring(source) 
-    shader = gl.CreateShader(type)
-	
-    gl.ShaderSource(shader, 1, &csource, nil)
-    gl.CompileShader(shader)
-
-	status: i32
-	gl.GetShaderiv(shader, gl.COMPILE_STATUS, &(status))
-
-	if status != 0 do return
-
-	info_length: i32
-	gl.GetShaderiv(shader, gl.INFO_LOG_LENGTH, &(info_length))
-	fmt.println(info_length)
-    
-	info_log := make([]u8, info_length)
-    defer delete(info_log)
-
-	gl.GetShaderInfoLog(shader, info_length, nil, &info_log[0])
-
-	fmt.println("shader compilation failed ", info_log)
-    assert(false, "shader compilation failed")
-    return 0
+shader_init :: proc(vert, frag: string) -> (s: shader_t = {}) {
+	program, is_ok := gl.load_shaders_file(vert, frag)
+	assert(is_ok, "shader loading failed")
+	s.program = program
+	return 
 }
 
 shader_deinit :: proc(shader: ^shader_t) {
