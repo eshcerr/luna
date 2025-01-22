@@ -4,10 +4,10 @@ import "vendor:glfw"
 running: bool = false
 
 main :: proc() {
-	running = window_create(1200, 720, "luna")
+	running = platform_create_window(1200, 720, "luna")
 	for {
 		if running == false {break}
-		window_update()
+		platform_update_window()
 	}
 }
 
