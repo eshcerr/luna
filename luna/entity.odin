@@ -22,7 +22,7 @@ entity_t :: struct {
 	user_id: user_id_t,
 }
 
-entity_create :: proc(gl: ^game_state_t) -> ^entity_t {
+entity_create :: proc(gs: ^game_state_t) -> ^entity_t {
 	spare_en: ^entity_t
 
 	for &en in gs.entities {

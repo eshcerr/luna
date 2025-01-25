@@ -10,3 +10,5 @@ mat3 :: linalg.Matrix3x3f32
 mat4 :: linalg.Matrix4x4f32
 
 color :: [4]f32
+aabb :: [4]f32
+

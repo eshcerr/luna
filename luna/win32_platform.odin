@@ -3,13 +3,15 @@ package luna
 import "core:fmt"
 import "core:strings"
 import win "core:sys/windows"
-import c "core:c"
 
 when ODIN_OS == .Windows {
-    window: win.HWND
+
+	win_platform_state :: struct {
+		window: win.HWND,
+	}
 
 	win_create_window :: proc(width, height: i32, title: string) -> bool {
-		LUNA_WNDCLASS_NAME :: "lunawnd"
+		LUNA_WNDCLASS_NAME :: "winp_lunawnd"
 		instance: win.HINSTANCE = win.HINSTANCE(win.GetModuleHandleW(nil))
 
 		wc: win.WNDCLASSEXW
@@ -19,13 +21,10 @@ when ODIN_OS == .Windows {
 		wc.hInstance = instance
 		wc.lpszClassName = raw_data(win.utf8_to_utf16(LUNA_WNDCLASS_NAME))
 
-		if bool(win.RegisterClassExW(&wc)) == false {
-			fmt.println("couldn't register class")
-			return false
-		}
+		assert(bool(win.RegisterClassExW(&wc)), "LUNA_ASSERT > couldn't register window class")
 
 		window = win.CreateWindowExW(
-			win.WS_EX_LAYERED | win.WS_EX_TOPMOST,
+			win.WS_EX_LAYERED,
 			raw_data(win.utf8_to_utf16(LUNA_WNDCLASS_NAME)),
 			raw_data(win.utf8_to_utf16(title)),
 			win.WS_OVERLAPPEDWINDOW,
@@ -39,17 +38,12 @@ when ODIN_OS == .Windows {
 			nil,
 		)
 
-		if window == nil {
-			fmt.println("couldn't create window")
-			return false
-		}
+		assert(window != nil, "LUNA_ASSERT > couldn't create window")
 
 		win.SetLayeredWindowAttributes(window, 0, 128, 0x0000_0002)
 
 		win.ShowWindow(window, win.SW_SHOW)
 		win.UpdateWindow(window)
-
-		fmt.println("created window")
 
 		return true
 	}
@@ -83,12 +77,12 @@ when ODIN_OS == .Windows {
 	}
 
 	win_load_gl_function :: proc(funcName: string) -> (func: rawptr) {
-        func = win.wglGetProcAddress(strings.clone_to_cstring(funcName))
-        if func == nil {
-            openGL_DLL := win.LoadLibraryW(raw_data(win.utf8_to_utf16("opengl32.dll")))
-            func = win.GetProcAddress(openGL_DLL, strings.clone_to_cstring(funcName))
-        }
-        assert(func != nil, "failed to load gl function")
-        return
-    }
+		func = win.wglGetProcAddress(strings.clone_to_cstring(funcName))
+		if func == nil {
+			openGL_DLL := win.LoadLibraryW(raw_data(win.utf8_to_utf16("opengl32.dll")))
+			func = win.GetProcAddress(openGL_DLL, strings.clone_to_cstring(funcName))
+		}
+		assert(func != nil, "LUNA_ASSERT > failed to load gl function")
+		return
+	}
 }
