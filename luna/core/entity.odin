@@ -32,16 +32,12 @@ entity_create :: proc(gs: ^game_state_t) -> ^entity_t {
 		}
 	}
 
-	if spare_en == nil {
-		// log err
-		// ran out of entityes, increase size
-		return nil
-	} else {
-		spare_en.flags = {.allocated}
-		gs.latest_entity_handle += 1
-		spare_en.id = gs.latest_entity_handle
-		return spare_en
-	}
+	assert(spare_en != nil, "ran out of entities, increase size")
+
+    spare_en.flags = {.allocated}
+	gs.latest_entity_handle += 1
+	spare_en.id = gs.latest_entity_handle
+	return spare_en
 }
 
 entity_destroy :: proc(entity: ^entity_t) {

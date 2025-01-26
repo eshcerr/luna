@@ -5,14 +5,14 @@ import "core:math/linalg"
 import "core:strings"
 
 vertex_t :: struct {
-	pos:   [3]f32,
-	color: [4]f32,
-	uv:    [2]f32,
+	pos:   vec3,
+	color: vec4,
+	uv:    vec2,
 }
 
 renderer_t :: struct {
 	vao, vbo, ebo: u32,
-	transform: linalg.Matrix4f32
+	transform: mat4
 }
 
 renderer_init :: proc() -> (r: renderer_t = {}) {
@@ -46,7 +46,7 @@ renderer_init :: proc() -> (r: renderer_t = {}) {
 	gl.VertexAttribPointer(2, 2, gl.FLOAT, false, 9 * size_of(f32), 7 * size_of(f32))
 	gl.EnableVertexAttribArray(2)
 	
-	r.transform = linalg.identity_matrix(linalg.Matrix4f32)
+	r.transform = linalg.identity_matrix(mat4)
 	r.transform *= linalg.matrix4_scale_f32(linalg.Vector3f32{1, 1, 1})
 	//gl.PolygonMode(gl.FRONT_AND_BACK, gl.LINE)
 	return

@@ -4,7 +4,7 @@ import "vendor:glfw"
 running: bool = false
 
 main :: proc() {
-	running = platform_create_window(1200, 720, "luna")
+	running = platform_create_window(default_window_width, default_window_height, "luna")
 	for {
 		if running == false {break}
 		platform_update_window()

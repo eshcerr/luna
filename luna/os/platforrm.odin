@@ -1,5 +1,11 @@
 package luna
 
+platform_state_t :: union {
+	win_platform_state_t,
+}
+
+platform_state: platform_state_t
+
 platform_create_window :: proc {
 	win_create_window,
 }

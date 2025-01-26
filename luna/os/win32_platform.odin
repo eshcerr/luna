@@ -5,8 +5,7 @@ import "core:strings"
 import win "core:sys/windows"
 
 when ODIN_OS == .Windows {
-
-	win_platform_state :: struct {
+	win_platform_state_t :: struct {
 		window: win.HWND,
 	}
 
@@ -23,7 +22,8 @@ when ODIN_OS == .Windows {
 
 		assert(bool(win.RegisterClassExW(&wc)), "LUNA_ASSERT > couldn't register window class")
 
-		window = win.CreateWindowExW(
+		state:= win_platform_state_t{}
+		state.window = win.CreateWindowExW(
 			win.WS_EX_LAYERED,
 			raw_data(win.utf8_to_utf16(LUNA_WNDCLASS_NAME)),
 			raw_data(win.utf8_to_utf16(title)),
@@ -38,20 +38,21 @@ when ODIN_OS == .Windows {
 			nil,
 		)
 
-		assert(window != nil, "LUNA_ASSERT > couldn't create window")
+		assert(state.window != nil, "LUNA_ASSERT > couldn't create window")
 
-		win.SetLayeredWindowAttributes(window, 0, 128, 0x0000_0002)
+		win.SetLayeredWindowAttributes(state.window, 0, 128, 0x0000_0002)
 
-		win.ShowWindow(window, win.SW_SHOW)
-		win.UpdateWindow(window)
+		win.ShowWindow(state.window, win.SW_SHOW)
+		win.UpdateWindow(state.window)
 
+		platform_state = state
 		return true
 	}
 
 	win_update_window :: proc() {
 		msg: win.MSG
 		for {
-			if win.PeekMessageW(&msg, window, 0, 0, win.PM_REMOVE) == win.FALSE {
+			if win.PeekMessageW(&msg, platform_state.(win_platform_state_t).window, 0, 0, win.PM_REMOVE) == win.FALSE {
 				break
 			}
 			win.TranslateMessage(&msg)
