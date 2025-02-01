@@ -1,4 +1,4 @@
-package luna
+package luna_core
 
 import "core:fmt"
 import "core:strings"

@@ -1,21 +1,24 @@
-package luna
+package luna_ogl
+
+import "../base"
 
 import gl "vendor:OpenGL"
 import "core:math/linalg"
 import "core:strings"
 
 vertex_t :: struct {
-	pos:   vec3,
-	color: vec4,
-	uv:    vec2,
+	pos:   base.vec3,
+	color: base.vec4,
+	uv:    base.vec2,
 }
 
 renderer_t :: struct {
 	vao, vbo, ebo: u32,
-	transform: mat4
+	transform: base.mat4
 }
 
 renderer_init :: proc() -> (r: renderer_t = {}) {
+	using base
 	vertices: [4]vertex_t = {
 		{{0.5, 0.5, 0.0}, {1.0, 1.0, 1.0, 1.0}, {1.0, 0.0}},
 		{{0.5, -0.5, 0.0}, {1.0, 1.0, 1.0, 1.0}, {1.0, 1.0}},
@@ -55,7 +58,7 @@ renderer_init :: proc() -> (r: renderer_t = {}) {
 renderer_draw :: proc(r: ^renderer_t, t: ^texture_t, s: ^shader_t) {
 	shader_use(s)
 	gl.BindTexture(gl.TEXTURE_2D, t.id)
-	gl.UniformMatrix4fv(gl.GetUniformLocation(shader.program, strings.clone_to_cstring("transform")), 1, false, &r.transform[0][0])
+	gl.UniformMatrix4fv(gl.GetUniformLocation(s.program, strings.clone_to_cstring("transform")), 1, false, &r.transform[0][0])
 
 	gl.BindVertexArray(r.vao)
 	gl.DrawElements(gl.TRIANGLES, 6, gl.UNSIGNED_INT, nil)

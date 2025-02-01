@@ -1,0 +1,26 @@
+package luna_core
+
+import "../base"
+
+collision_aabb_to_aabb :: proc(a: base.aabb, b: base.aabb) -> (bool, base.vec2) {
+	using base
+
+	dx: f32 = (a.z + a.x) / 2 - (b.z + b.x) / 2
+	dy: f32 = (a.w + a.y) / 2 - (b.w + b.y) / 2
+
+	overlap_x := (a.z - a.x) / 2 + (b.z - b.x) / 2 - abs(dx)
+	overlap_y := (a.w - a.y) / 2 + (b.w - b.y) / 2 - abs(dy)
+
+	if overlap_x <= 0 || overlap_y <= 0 {
+		return false, vec2{}
+	}
+
+	penetration := vec2{}
+	if overlap_x < overlap_y {
+		penetration.x = overlap_x if dx > 0 else -overlap_x
+	} else {
+		penetration.y = overlap_y if dy > 0 else -overlap_y
+	}
+
+	return true, penetration
+}

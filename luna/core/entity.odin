@@ -1,4 +1,6 @@
-package luna
+package luna_core
+
+import "../base"
 
 import "core:mem"
 
@@ -16,9 +18,6 @@ entity_t :: struct {
 	id:      entity_handle_t,
 	kind:    entity_kind_e,
 	flags:   bit_set[entity_flags_e],
-	pos:     vec2,
-	vel:     vec2,
-	acc:     vec2,
 	user_id: user_id_t,
 }
 

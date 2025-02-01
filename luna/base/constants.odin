@@ -1,4 +1,4 @@
-package luna
+package luna_base
 
 import "core:fmt"
 

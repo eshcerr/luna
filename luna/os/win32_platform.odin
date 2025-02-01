@@ -1,10 +1,12 @@
-package luna
+package luna_os
+
+import "../base"
 
 import "core:c"
 import "core:fmt"
 import "core:strings"
 import "core:sys/windows"
-import gl "vendor:OpenGL"
+
 
 when ODIN_OS == .Windows {
 	win_platform_state_t :: struct {
@@ -13,6 +15,7 @@ when ODIN_OS == .Windows {
 
 	win_create_window :: proc(size: []i32, title: string) -> bool {
 		using windows
+		using base
 
 		LUNA_WNDCLASS_NAME :: "winp_lunawnd"
 		instance: HINSTANCE = HINSTANCE(GetModuleHandleW(nil))

@@ -1,4 +1,4 @@
-package luna
+package luna_ogl
 
 import "core:strings"
 import stbi "vendor:stb/image"

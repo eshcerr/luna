@@ -1,41 +1,48 @@
 package luna
 
+import "base"
+import "core"
+import "os"
+import "ogl"
+
 import "vendor:glfw"
 
-running: bool = false
-
 main :: proc() {
-	running = platform_create_window({default_window_width, default_window_height}, "luna")
+	using os
+	running = platform_create_window([]i32{base.default_window_width, base.default_window_height}, "luna")
 	for {
 		if running == false {break}
 		platform_update_window()
 	}
 }
 
-renderer: renderer_t
 
-car_sprite: sprite_t
-texture: texture_t
-shader: shader_t
+renderer: ogl.renderer_t
 
-setup :: proc(app: ^app_t) {}
+car_sprite: ogl.sprite_t
+texture: ogl.texture_t
+shader: ogl.shader_t
 
-init :: proc(app: ^app_t) {
+setup :: proc(app: ^core.app_t) {}
+
+init :: proc(app: ^core.app_t) {
+	using ogl
 	renderer = renderer_init()
-	shader = shader_init("luna/shader.vert.glsl", "luna/shader.frag.glsl")
+	shader = shader_init("luna/ogl/shader.vert.glsl", "luna/ogl/shader.frag.glsl")
 	car_sprite = sprite_from_png("luna/car.png")
 	texture = texture_init(&car_sprite)
 }
 
-deinit :: proc(app: ^app_t) {
+deinit :: proc(app: ^core.app_t) {
+	using ogl
 	renderer_deinit(&renderer)
 	shader_deinit(&shader)
 	texture_deinit(&texture)
 	sprite_deinit(&car_sprite)
 }
 
-update :: proc(app: ^app_t) {}
+update :: proc(app: ^core.app_t) {}
 
-draw :: proc(app: ^app_t) {
+draw :: proc(app: ^core.app_t) {
 	//renderer_draw(&renderer, &texture, &shader)
 }

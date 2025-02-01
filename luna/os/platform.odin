@@ -1,4 +1,6 @@
-package luna
+package luna_os
+
+running: bool = false
 
 platform_state_t :: union {
 	win_platform_state_t,
