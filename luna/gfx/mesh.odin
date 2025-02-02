@@ -17,9 +17,6 @@ mesh_t :: struct {
 	indices:  []u32,
 }
 
-
-
-
 mesh_clone :: proc(mesh: ^mesh_t) -> mesh_t {
 	return {vertices = slice.clone(mesh.vertices), indices = slice.clone(mesh.indices)}
 }

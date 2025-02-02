@@ -1,4 +1,4 @@
-package luna_ogl
+package luna_gfx
 
 import "core:fmt"
 import gl "vendor:OpenGL"

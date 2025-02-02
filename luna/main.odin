@@ -2,7 +2,7 @@ package luna
 
 import "base"
 import "core"
-import "ogl"
+import "gfx"
 
 import "vendor:glfw"
 
@@ -26,25 +26,25 @@ main :: proc() {
 }
 
 
-renderer: ogl.renderer_t
-car_sprite: ogl.sprite_t
-texture: ogl.texture_t
-shader: ogl.shader_t
+renderer: gfx.renderer_t
+car_sprite: core.sprite_t
+texture: gfx.texture_t
+shader: gfx.shader_t
 
 setup :: proc(app: ^core.app_t) {}
 
 init :: proc(app: ^core.app_t) {
-	renderer = ogl.renderer_init()
-	shader = ogl.shader_init("luna/ogl/shader.vert.glsl", "luna/ogl/shader.frag.glsl")
-	car_sprite = ogl.sprite_from_png("luna/car.png")
-	texture = ogl.texture_init(&car_sprite)
+	renderer = gfx.renderer_init()
+	shader = gfx.shader_init("luna/ogl/shader.vert.glsl", "luna/ogl/shader.frag.glsl")
+	car_sprite = core.sprite_from_png("luna/car.png")
+	texture = gfx.texture_init(&car_sprite)
 }
 
 deinit :: proc(app: ^core.app_t) {
-	ogl.renderer_deinit(&renderer)
-	ogl.shader_deinit(&shader)
-	ogl.texture_deinit(&texture)
-	ogl.sprite_deinit(&car_sprite)
+	gfx.renderer_deinit(&renderer)
+	gfx.shader_deinit(&shader)
+	gfx.texture_deinit(&texture)
+	core.sprite_deinit(&car_sprite)
 }
 
 update :: proc(app: ^core.app_t) {}
