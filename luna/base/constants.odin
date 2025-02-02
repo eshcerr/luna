@@ -2,6 +2,18 @@ package luna_base
 
 import "core:fmt"
 
+KB :: 1024
+MB :: 1024 * 1024
+GB :: 1024 * 1024 * 1024
+
+VEC3_FORWARD :: vec3{1.0, 0.0, 0.0}
+VEC3_BACKWARD :: vec3{-1.0, 0.0, 0.0}
+VEC3_RIGHT :: vec3{0.0, 1.0, 0.0}
+VEC3_LEFT :: vec3{0.0, -1.0, 0.0}
+VEC3_UP :: vec3{0.0, 0.0, 1.0}
+VEC3_DOWN :: vec3{0.0, 0.0, -1.0}
+VEC3_ONE :: vec3{1.0, 1.0, 1.0}
+
 COLOR_TRANSPARENT :: vec4{0.0, 0.0, 0.0, 0.0}
 COLOR_RED :: vec4{1.0, 0.0, 0.0, 1.0}
 COLOR_GREEN :: vec4{0.0, 1.0, 0.0, 1.0}

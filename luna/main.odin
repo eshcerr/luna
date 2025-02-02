@@ -8,7 +8,7 @@ import "vendor:glfw"
 
 main :: proc() {
 
-	core.app_run(
+	app_run(
 		&{
 			setup_cb = setup,
 			init_cb = init,
@@ -19,7 +19,11 @@ main :: proc() {
 			window = {
 				width = base.DEFAULT_WINDOW_WIDTH,
 				height = base.DEFAULT_WINDOW_HEIGHT,
-				bg_color = base.COLOR_AQUA,
+			},
+			render_pipeline = {
+				backend = gfx.supported_backend_e.opengl,
+				view_mode = gfx.view_mode_e.two_d,
+				clear_color = base.COLOR_CRIMSON
 			},
 		},
 	)
@@ -31,24 +35,25 @@ car_sprite: core.sprite_t
 texture: gfx.texture_t
 shader: gfx.shader_t
 
-setup :: proc(app: ^core.app_t) {}
+setup :: proc(app: ^app_t) {}
 
-init :: proc(app: ^core.app_t) {
+init :: proc(app: ^app_t) {
 	renderer = gfx.renderer_init()
 	shader = gfx.shader_init("luna/ogl/shader.vert.glsl", "luna/ogl/shader.frag.glsl")
 	car_sprite = core.sprite_from_png("luna/car.png")
 	texture = gfx.texture_init(&car_sprite)
 }
 
-deinit :: proc(app: ^core.app_t) {
+deinit :: proc(app: ^app_t) {
 	gfx.renderer_deinit(&renderer)
 	gfx.shader_deinit(&shader)
 	gfx.texture_deinit(&texture)
 	core.sprite_deinit(&car_sprite)
 }
 
-update :: proc(app: ^core.app_t) {}
+update :: proc(app: ^app_t) {}
 
-draw :: proc(app: ^core.app_t) {
-	//renderer_draw(&renderer, &texture, &shader)
+draw :: proc(app: ^app_t) {
+	gfx.shader_use(&shader)
+	gfx.renderer_begin(&app.render_pipeline)
 }

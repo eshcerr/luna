@@ -1,4 +1,6 @@
-package luna_core
+package luna
+
+import "gfx"
 
 import "core:fmt"
 import "core:strings"
@@ -18,12 +20,12 @@ app_t :: struct {
 	deinit_cb: proc(app: ^app_t),
 	title:     string,
 	window:    window_t,
+	render_pipeline: gfx.render_pipeline_t
 }
 
 window_t :: struct {
 	width:    i32,
 	height:   i32,
-	bg_color: [4]f32,
 	handle:   glfw.WindowHandle,
 }
 
@@ -48,14 +50,6 @@ app_run :: proc(app: ^app_t) {
 		glfw.PollEvents()
 
 		app.update_cb(app)
-
-		gl.ClearColor(
-			app.window.bg_color.r,
-			app.window.bg_color.g,
-			app.window.bg_color.b,
-			app.window.bg_color.a,
-		)
-		gl.Clear(gl.COLOR_BUFFER_BIT)
 
 		app.draw_cb(app)
 	}
