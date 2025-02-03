@@ -4,14 +4,14 @@ layout (location = 0) out vec2 tex_coords;
 
 void main()
 {
-    vec2 vertices[6];
-
-    vertices[0] = vec2(-0.5, 0.5);
-    vertices[1] = vec2(-0.5, -0.5);
-    vertices[2] = vec2(0.5, 0.5);
-    vertices[3] = vec2(0.5, 0.5);
-    vertices[4] = vec2(-0.5, -0.5);
-    vertices[5] = vec2(0.5, -0.5);
+    vec2 vertices[6] = {
+        vec2(-0.5, 0.5),
+        vec2(-0.5, -0.5),
+        vec2(0.5, 0.5),
+        vec2(0.5, 0.5),
+        vec2(-0.5, -0.5),
+        vec2(0.5, -0.5)
+    }
 
     float left = 0.0;
     float top = 0.0;
