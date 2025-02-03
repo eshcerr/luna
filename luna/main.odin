@@ -21,6 +21,11 @@ main :: proc() {
 				backend = gfx.supported_backend_e.opengl,
 				view_mode = gfx.view_mode_e.two_d,
 				clear_color = base.COLOR_CRIMSON,
+				game_camera = {
+					position = base.vec2{0, 0},
+					dimentions = base.vec2{base.DEFAULT_WINDOW_WIDTH, base.DEFAULT_WINDOW_HEIGHT},
+					zoom = 1
+				}
 			},
 		},
 	)
@@ -68,13 +73,14 @@ deinit :: proc(app: ^app_t) {
 update :: proc(app: ^app_t) {}
 
 draw :: proc(app: ^app_t) {
-	gfx.renderer_begin(&app.render_pipeline)
-
 	gfx.shader_use(&shader)
-	gfx.shader_set_vec2(&shader, "screen_size", base.vec2{f32(app.window.width), f32(app.window.height)})
+	
+	gfx.renderer_begin(&app.render_pipeline)
+	gfx.renderer_update_camera(&app.render_pipeline.game_camera)
+
 
 	gfx.batch_begin(&batch)
-	gfx.batch_add(&batch, 2, base.vec2{50, 100}, base.vec2{1, 1})
+	gfx.batch_add(&batch, 2, base.vec2{f32(glfw.GetTime()) * 10, 0}, base.vec2{1, 1})
 	gfx.batch_add(&batch, 3, base.vec2{600, 100}, base.vec2{1, 1})
 
 	gfx.renderer_draw_batch(&batch)

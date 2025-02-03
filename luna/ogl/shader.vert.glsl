@@ -10,7 +10,7 @@ layout (std430, binding = 0) buffer batch_sbo {
     batch_item_t items[];
 };
 
-uniform vec2 screen_size;
+uniform mat4 orthographic_projection;
 
 layout (location = 0) out vec2 tex_coords;
 
@@ -42,9 +42,7 @@ void main()
     };
 
     vec2 vertex_pos = vertices[gl_VertexID];
-    vertex_pos.y = -vertex_pos.y + screen_size.y;
-    vertex_pos = 2.0 * (vertex_pos / screen_size) - 1.0;
-    gl_Position = vec4(vertex_pos, 0.0, 1.0);
+    gl_Position = orthographic_projection * vec4(vertex_pos, 0.0, 1.0);
 
     tex_coords = tex_coords_array[gl_VertexID];
 }

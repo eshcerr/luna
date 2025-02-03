@@ -93,6 +93,7 @@ app_init :: proc(app: ^app_t) {
 	gl.Viewport(0, 0, app.window.width, app.window.height)
 
 	//glfw.SetKeyCallback(app.window.handle)
+	glfw.SetFramebufferSizeCallback(app.window.handle, framebuffer_size_cb)
 
 
 	fmt.println("luna initialisation completed")

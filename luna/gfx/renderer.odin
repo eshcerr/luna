@@ -2,6 +2,7 @@ package luna_gfx
 
 import "../base"
 
+import "core:strings"
 import gl "vendor:OpenGL"
 
 renderer_t :: struct {
@@ -39,6 +40,19 @@ renderer_begin :: proc(pip: ^render_pipeline_t) {
 	gl.ClearColor(pip.clear_color.r, pip.clear_color.g, pip.clear_color.b, pip.clear_color.a)
 	gl.ClearDepth(0)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+}
+
+renderer_update_camera :: proc(camera: ^camera_t) {
+	shader: i32
+	gl.GetIntegerv(gl.CURRENT_PROGRAM, &shader)
+	game_camera_proj := camera_projection(camera)
+
+	gl.UniformMatrix4fv(
+		gl.GetUniformLocation(u32(shader), strings.clone_to_cstring("orthographic_projection")),
+		1,
+		false,
+		&game_camera_proj[0][0],
+	)
 }
 
 renderer_draw_batch :: proc(batch: ^batch_t) {
