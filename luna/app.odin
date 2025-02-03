@@ -9,7 +9,7 @@ import gl "vendor:OpenGL"
 import "vendor:glfw"
 
 GL_MAJOR_VERSION :: 4
-GL_MINOR_VERSION :: 6
+GL_MINOR_VERSION :: 3
 
 app_t :: struct {
 	setup_cb:  proc(app: ^app_t),
@@ -44,7 +44,7 @@ app_run :: proc(app: ^app_t) {
 		current_frame = glfw.GetTime()
 		delta_time = current_frame - last_frame
 		last_frame = current_frame
-		fmt.println(60.0 / delta_time)
+		//fmt.println(60.0 / delta_time)
 
 		glfw.SwapBuffers((app.window.handle))
 		glfw.PollEvents()
