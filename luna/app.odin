@@ -40,17 +40,16 @@ app_run :: proc(app: ^app_t) {
 	app_init(app)
 	defer app_deinit(app)
 
-	for (!glfw.WindowShouldClose(app.window.handle)) {
+	for !glfw.WindowShouldClose(app.window.handle) {
 		current_frame = glfw.GetTime()
 		delta_time = current_frame - last_frame
 		last_frame = current_frame
 		//fmt.println(60.0 / delta_time)
-
 		glfw.SwapBuffers((app.window.handle))
 		glfw.PollEvents()
-
+		
 		app.update_cb(app)
-
+		
 		app.draw_cb(app)
 	}
 }
@@ -64,7 +63,7 @@ app_setup :: proc(app: ^app_t) {
 	glfw.WindowHint(glfw.CLIENT_API, glfw.OPENGL_API)
 	glfw.WindowHint(glfw.DOUBLEBUFFER, true)
 
-	if (glfw.Init() != true) {
+	if glfw.Init() != true {
 		fmt.println("failed to init glfw")
 		return
 	}
@@ -82,7 +81,7 @@ app_init :: proc(app: ^app_t) {
 		nil,
 	)
 
-	if (app.window.handle == nil) {
+	if app.window.handle == nil {
 		fmt.println("failed to create window")
 		return
 	}

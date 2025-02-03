@@ -1,22 +1,36 @@
 #version 430 core
 
+struct batch_item_t {
+    ivec4 rect;
+    vec2 position;
+    vec2 scale;
+};
+
+layout (std430, binding = 0) buffer batch_sbo {
+    batch_item_t items[];
+};
+
+uniform vec2 screen_size;
+
 layout (location = 0) out vec2 tex_coords;
 
 void main()
 {
-    vec2 vertices[6] = {
-        vec2(-0.5, 0.5),
-        vec2(-0.5, -0.5),
-        vec2(0.5, 0.5),
-        vec2(0.5, 0.5),
-        vec2(-0.5, -0.5),
-        vec2(0.5, -0.5)
-    }
+    batch_item_t item = items[gl_InstanceID];
 
-    float left = 0.0;
-    float top = 0.0;
-    float right = 1078.0;
-    float bottom = 1080.0;
+    vec2 vertices[6] = {
+        item.position,
+        vec2(item.position + vec2(0.0, item.rect.w * item.scale.y)),
+        vec2(item.position + vec2(item.rect.z * item.scale.x, 0.0)),
+        vec2(item.position + vec2(item.rect.z * item.scale.x, 0.0)),
+        vec2(item.position + vec2(0.0, item.rect.w * item.scale.y)),
+        item.position + item.rect.zw * item.scale
+    };
+
+    float left = item.rect.x;
+    float top = item.rect.y;
+    float right = item.rect.x + item.rect.z;
+    float bottom = item.rect.y + item.rect.w;
 
     vec2 tex_coords_array[6] = {
         vec2(left, top),
@@ -27,6 +41,10 @@ void main()
         vec2(right, bottom)
     };
 
-    gl_Position = vec4(vertices[gl_VertexID], 1.0, 1.0);
+    vec2 vertex_pos = vertices[gl_VertexID];
+    vertex_pos.y = -vertex_pos.y + screen_size.y;
+    vertex_pos = 2.0 * (vertex_pos / screen_size) - 1.0;
+    gl_Position = vec4(vertex_pos, 0.0, 1.0);
+
     tex_coords = tex_coords_array[gl_VertexID];
 }

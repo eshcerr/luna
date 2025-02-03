@@ -1,5 +1,7 @@
 package luna_gfx
 
+import "../base"
+
 import "core:fmt"
 import "core:os"
 import "core:strings"
@@ -14,7 +16,7 @@ shader_init :: proc(vert, frag: string) -> (s: shader_t = {}) {
 	program, is_ok := gl.load_shaders_file(vert, frag)
 	assert(is_ok, "shader loading failed")
 	s.program = program
-	return 
+	return
 }
 
 shader_deinit :: proc(shader: ^shader_t) {
@@ -23,6 +25,10 @@ shader_deinit :: proc(shader: ^shader_t) {
 
 shader_use :: proc(shader: ^shader_t) {
 	gl.UseProgram(shader.program)
+}
+
+shader_set_vec2 :: proc(shader: ^shader_t, name: string, v: base.vec2) {
+	gl.Uniform2f(gl.GetUniformLocation(shader.program, strings.clone_to_cstring(name)), v.x, v.y)
 }
 
 shader_seti :: proc(shader: ^shader_t, name: string, v: i32) {
