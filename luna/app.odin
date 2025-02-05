@@ -93,7 +93,8 @@ app_init :: proc(app: ^app_t) {
 	gl.load_up_to(GL_MAJOR_VERSION, GL_MINOR_VERSION, glfw.gl_set_proc_address)
 	gl.Viewport(0, 0, app.window.width, app.window.height)
 
-	glfw.SetKeyCallback(app.window.handle, core.inputs_listen_to_glfw)
+	glfw.SetKeyCallback(app.window.handle, core.inputs_listen_to_glfw_keys)
+	glfw.SetMouseButtonCallback(app.window.handle, core.inputs_listen_to_glfw_mouse_buttons)
 	glfw.SetFramebufferSizeCallback(app.window.handle, framebuffer_size_cb)
 
 
