@@ -224,6 +224,7 @@ mouse_buttons_e :: enum {
 	MOUSE_BUTTON_6,
 	MOUSE_BUTTON_7,
 	MOUSE_BUTTON_8,
+	COUNT,
 }
 
 glfw_mouse_buttons_lookup_table: map[c.int]mouse_buttons_e = {
@@ -247,9 +248,15 @@ keyboard_t :: struct {
 	keys: [keycode_e.COUNT]key_t,
 }
 
+button_t :: struct {
+	is_down, just_pressed, just_released: bool,
+	half_transition_count:                u8,
+}
+
 mouse_t :: struct {
 	prev_mouse_pos, mouse_pos, rel_mouse_pos:                   base.ivec2,
 	prev_mouse_pos_world, mouse_pos_world, rel_mouse_pos_world: base.ivec2,
+	buttons:                                                    [mouse_buttons_e.COUNT]button_t,
 }
 
 gamepad_t :: struct {}
@@ -296,5 +303,12 @@ inputs_listen_to_glfw_mouse_buttons :: proc "c" (
 	window: WindowHandle,
 	button, action, mods: c.int,
 ) {
+	is_down: bool = (action == glfw.PRESS || action == glfw.RELEASE)
+	button_code := glfw_mouse_buttons_lookup_table[button]
+	p_button := &input.mouse.buttons[button_code]
 
+	p_button.just_pressed = !p_key.just_pressed && !p_key.is_down && is_down
+	p_button.just_released = !p_key.just_released && p_key.is_down && !is_down
+	p_button.is_down = is_down
+	p_button.half_transition_count += 1
 }
