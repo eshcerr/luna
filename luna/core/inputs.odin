@@ -111,7 +111,7 @@ keycode_e :: enum {
 	COUNT = 255,
 }
 
-glfw_key_lookup_table: map[c.int]keycode_e = {
+glfw_key_lookup_table : map[c.int]keycode_e = {
 	glfw.KEY_A             = keycode_e.KEY_A,
 	glfw.KEY_B             = keycode_e.KEY_B,
 	glfw.KEY_C             = keycode_e.KEY_C,
@@ -238,14 +238,8 @@ glfw_mouse_buttons_lookup_table: map[c.int]mouse_buttons_e = {
 	glfw.MOUSE_BUTTON_8 = mouse_buttons_e.MOUSE_BUTTON_8,
 }
 
-
-key_t :: struct {
-	is_down, just_pressed, just_released: bool,
-	half_transition_count:                u8,
-}
-
 keyboard_t :: struct {
-	keys: [keycode_e.COUNT]key_t,
+	keys: [keycode_e.COUNT]button_t,
 }
 
 button_t :: struct {
@@ -271,12 +265,12 @@ input_t :: struct {
 input: input_t = {}
 
 inputs_key_pressed :: proc(keycode: keycode_e) -> bool {
-	key: key_t = input.keyboard.keys[keycode]
+	key:= input.keyboard.keys[keycode]
 	return key.is_down && key.half_transition_count == 1 || key.half_transition_count > 1
 }
 
 inputs_key_released :: proc(keycode: keycode_e) -> bool {
-	key: key_t = input.keyboard.keys[keycode]
+	key:= input.keyboard.keys[keycode]
 	return !key.is_down && key.half_transition_count == 1 || key.half_transition_count > 1
 }
 
@@ -300,15 +294,15 @@ inputs_listen_to_glfw_keys :: proc "c" (
 }
 
 inputs_listen_to_glfw_mouse_buttons :: proc "c" (
-	window: WindowHandle,
+	window: glfw.WindowHandle,
 	button, action, mods: c.int,
 ) {
 	is_down: bool = (action == glfw.PRESS || action == glfw.RELEASE)
 	button_code := glfw_mouse_buttons_lookup_table[button]
 	p_button := &input.mouse.buttons[button_code]
 
-	p_button.just_pressed = !p_key.just_pressed && !p_key.is_down && is_down
-	p_button.just_released = !p_key.just_released && p_key.is_down && !is_down
+	p_button.just_pressed = !p_button.just_pressed && !p_button.is_down && is_down
+	p_button.just_released = !p_button.just_released && p_button.is_down && !is_down
 	p_button.is_down = is_down
 	p_button.half_transition_count += 1
 }
