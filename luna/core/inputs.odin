@@ -111,7 +111,7 @@ keycode_e :: enum {
 	COUNT = 255,
 }
 
-glfw_key_lookup_table : map[c.int]keycode_e = {
+glfw_key_lookup_table: map[c.int]keycode_e = {
 	glfw.KEY_A             = keycode_e.KEY_A,
 	glfw.KEY_B             = keycode_e.KEY_B,
 	glfw.KEY_C             = keycode_e.KEY_C,
@@ -224,7 +224,7 @@ mouse_buttons_e :: enum {
 	MOUSE_BUTTON_6,
 	MOUSE_BUTTON_7,
 	MOUSE_BUTTON_8,
-	COUNT,
+	COUNT = 8,
 }
 
 glfw_mouse_buttons_lookup_table: map[c.int]mouse_buttons_e = {
@@ -238,16 +238,17 @@ glfw_mouse_buttons_lookup_table: map[c.int]mouse_buttons_e = {
 	glfw.MOUSE_BUTTON_8 = mouse_buttons_e.MOUSE_BUTTON_8,
 }
 
-keyboard_t :: struct {
-	keys: [keycode_e.COUNT]button_t,
-}
-
 button_t :: struct {
 	is_down, just_pressed, just_released: bool,
 	half_transition_count:                u8,
 }
 
+keyboard_t :: struct {
+	keys: [keycode_e.COUNT]button_t,
+}
+
 mouse_t :: struct {
+	delta:                                                      base.ivec2,
 	prev_mouse_pos, mouse_pos, rel_mouse_pos:                   base.ivec2,
 	prev_mouse_pos_world, mouse_pos_world, rel_mouse_pos_world: base.ivec2,
 	buttons:                                                    [mouse_buttons_e.COUNT]button_t,
@@ -264,13 +265,33 @@ input_t :: struct {
 
 input: input_t = {}
 
+inputs_update :: proc() {
+	for &key in input.keyboard.keys {
+		key.just_pressed = false
+		key.just_released = false
+		key.half_transition_count = 0
+	}
+
+	for &button in input.mouse.buttons {
+		button.just_pressed = false
+		button.just_released = false
+		button.half_transition_count = 0
+	}
+}
+
+inputs_update_mouse :: proc(window: glfw.WindowHandle) {
+	input.mouse.prev_mouse_pos = input.mouse.mouse_pos
+	input.mouse.mouse_pos = glfw.GetCursorPos(window)
+	input.mouse.delta = input.mouse.prev_mouse_pos - input.mouse.mouse_pos
+}
+
 inputs_key_pressed :: proc(keycode: keycode_e) -> bool {
-	key:= input.keyboard.keys[keycode]
+	key := input.keyboard.keys[keycode]
 	return key.is_down && key.half_transition_count == 1 || key.half_transition_count > 1
 }
 
 inputs_key_released :: proc(keycode: keycode_e) -> bool {
-	key:= input.keyboard.keys[keycode]
+	key := input.keyboard.keys[keycode]
 	return !key.is_down && key.half_transition_count == 1 || key.half_transition_count > 1
 }
 
