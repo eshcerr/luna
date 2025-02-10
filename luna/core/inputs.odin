@@ -1,6 +1,7 @@
 package luna_core
 
 import "../base"
+import "../gfx"
 
 import "core:c"
 import "vendor:glfw"
@@ -248,10 +249,10 @@ keyboard_t :: struct {
 }
 
 mouse_t :: struct {
-	delta:                                                      base.ivec2,
-	prev_mouse_pos, mouse_pos, rel_mouse_pos:                   base.ivec2,
-	prev_mouse_pos_world, mouse_pos_world, rel_mouse_pos_world: base.ivec2,
-	buttons:                                                    [mouse_buttons_e.COUNT]button_t,
+	delta:                                 base.ivec2,
+	prev_mouse_pos, mouse_pos:             base.ivec2,
+	prev_mouse_pos_world, mouse_pos_world: base.ivec2,
+	buttons:                               [mouse_buttons_e.COUNT]button_t,
 }
 
 gamepad_t :: struct {}
@@ -280,9 +281,16 @@ inputs_update :: proc() {
 }
 
 inputs_update_mouse :: proc(window: glfw.WindowHandle) {
-	input.mouse.prev_mouse_pos = input.mouse.mouse_pos
 	x, y := glfw.GetCursorPos(window)
+
+	input.mouse.prev_mouse_pos = input.mouse.mouse_pos
+	input.mouse.prev_mouse_pos_world = input.mouse.mouse_pos_world
+
 	input.mouse.mouse_pos = base.ivec2{i32(x), i32(y)}
+	input.mouse.mouse_pos_world = base.vec2_to_ivec2(
+		gfx.camera_screen_to_world(input.mouse.mouse_pos),
+	)
+
 	input.mouse.delta = input.mouse.prev_mouse_pos - input.mouse.mouse_pos
 }
 

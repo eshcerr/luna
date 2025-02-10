@@ -1,27 +1,26 @@
 package luna_gfx
 
 import "../base"
-import "../core"
 
 import gl "vendor:OpenGL"
 
 MAX_BATCH_ITEM :: 1024
 
 batch_t :: struct {
-	atlas:  ^core.atlas_t,
+	atlas:  ^atlas_t,
 	tex_id: u32,
 	items:  [dynamic]batch_item_t,
 }
 
 batch_item_t :: struct #packed {
-	rect:           base.iaabb,
+	rect:            base.iaabb,
 	position, scale: base.vec2,
 }
 
-batch_init :: proc(atlas: ^core.atlas_t) -> batch_t {
+batch_init :: proc(atlas: ^atlas_t) -> batch_t {
 	batch: batch_t = {}
-    batch.atlas = atlas
-    batch.items = make_dynamic_array([dynamic]batch_item_t)
+	batch.atlas = atlas
+	batch.items = make_dynamic_array([dynamic]batch_item_t)
 
 	gl.GenTextures(1, &batch.tex_id)
 	gl.BindTexture(gl.TEXTURE_2D, batch.tex_id)
@@ -43,12 +42,12 @@ batch_init :: proc(atlas: ^core.atlas_t) -> batch_t {
 		&atlas.sprite.data[0],
 	)
 
-    return batch
+	return batch
 }
 
 batch_deinit :: proc(batch: ^batch_t) {
 	clear_dynamic_array(&batch.items)
-    delete_dynamic_array(batch.items)
+	delete_dynamic_array(batch.items)
 	gl.DeleteTextures(1, &batch.tex_id)
 }
 

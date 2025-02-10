@@ -1,4 +1,4 @@
-package luna_core
+package luna_gfx
 
 import "../base"
 

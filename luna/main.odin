@@ -18,16 +18,16 @@ main :: proc() {
 			draw_cb = draw,
 			deinit_cb = deinit,
 			title = "luna",
-			window = {width = base.DEFAULT_WINDOW_WIDTH, height = base.DEFAULT_WINDOW_HEIGHT},
-			render_pipeline = {
+			pip = {
 				backend = gfx.supported_backend_e.opengl,
 				view_mode = gfx.view_mode_e.two_d,
 				clear_color = base.COLOR_CRIMSON,
 				game_camera = {
 					position = base.vec2{0, 0},
 					dimentions = base.vec2{base.DEFAULT_WINDOW_WIDTH, base.DEFAULT_WINDOW_HEIGHT},
-					zoom = 1
-				}
+					zoom = 1,
+				},
+				window_size = {base.DEFAULT_WINDOW_WIDTH, base.DEFAULT_WINDOW_HEIGHT},
 			},
 		},
 	)
@@ -37,8 +37,8 @@ main :: proc() {
 renderer: gfx.renderer_t
 batch: gfx.batch_t
 
-car_sprite: core.sprite_t
-car_atlas: core.atlas_t
+car_sprite: gfx.sprite_t
+car_atlas: gfx.atlas_t
 
 shader: gfx.shader_t
 
@@ -48,8 +48,8 @@ init :: proc(app: ^app_t) {
 	renderer = gfx.renderer_init()
 	shader = gfx.shader_init("luna/ogl/shader.vert.glsl", "luna/ogl/shader.frag.glsl")
 
-	car_sprite = core.sprite_from_png("luna/car.png")
-	car_atlas = core.atlas_init(
+	car_sprite = gfx.sprite_from_png("luna/car.png")
+	car_atlas = gfx.atlas_init(
 		&car_sprite,
 		{
 			0 = base.iaabb{0, 0, 500, 500},
@@ -68,20 +68,19 @@ deinit :: proc(app: ^app_t) {
 
 	gfx.shader_deinit(&shader)
 
-	core.atlas_deinit(&car_atlas)
-	core.sprite_deinit(&car_sprite)
+	gfx.atlas_deinit(&car_atlas)
+	gfx.sprite_deinit(&car_sprite)
 }
 
 update :: proc(app: ^app_t) {
-	fmt.println(core.inputs_mouse_button_down(.MOUSE_BUTTON_2))
+	fmt.println(core.input.mouse.mouse_pos_world)
 }
 
 draw :: proc(app: ^app_t) {
 	gfx.shader_use(&shader)
-	
-	gfx.renderer_begin(&app.render_pipeline)
-	gfx.renderer_update_camera(&app.render_pipeline.game_camera)
 
+	gfx.renderer_begin(&app.pip)
+	gfx.renderer_update_camera(&app.pip.game_camera)
 
 	gfx.batch_begin(&batch)
 	gfx.batch_add(&batch, 2, base.vec2{f32(glfw.GetTime()) * 10, 0}, base.vec2{1, 1})

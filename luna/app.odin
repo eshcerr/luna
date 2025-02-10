@@ -20,14 +20,8 @@ app_t :: struct {
 	draw_cb:   proc(app: ^app_t),
 	deinit_cb: proc(app: ^app_t),
 	title:     string,
-	window:    window_t,
-	render_pipeline: gfx.render_pipeline_t
-}
-
-window_t :: struct {
-	width:    i32,
-	height:   i32,
-	handle:   glfw.WindowHandle,
+	pip:       gfx.render_pipeline_t,
+	game_data: ^any,
 }
 
 delta_time: f64 = 0
@@ -37,24 +31,24 @@ current_frame: f64 = 0
 last_frame: f64 = 0
 
 app_run :: proc(app: ^app_t) {
+	gfx.pip = &app.pip
 	app_setup(app)
 	app_init(app)
 	defer app_deinit(app)
 
-	for !glfw.WindowShouldClose(app.window.handle) {
+	for !glfw.WindowShouldClose(app.pip.window_handle.(glfw.WindowHandle)) {
 		current_frame = glfw.GetTime()
 		delta_time = current_frame - last_frame
 		last_frame = current_frame
 		//fmt.println(60.0 / delta_time)
-		glfw.SwapBuffers(app.window.handle)
+		glfw.SwapBuffers(app.pip.window_handle.(glfw.WindowHandle))
 
+		// reset inputs values
 		core.inputs_update()
-		core.inputs_update_mouse(app.window.handle)
-		
 		glfw.PollEvents()
-		
+		core.inputs_update_mouse(app.pip.window_handle.(glfw.WindowHandle))
+
 		app.update_cb(app)
-		
 		app.draw_cb(app)
 	}
 }
@@ -78,28 +72,32 @@ app_setup :: proc(app: ^app_t) {
 
 @(private = "file")
 app_init :: proc(app: ^app_t) {
-	app.window.handle = glfw.CreateWindow(
-		app.window.width,
-		app.window.height,
+	handle: gfx.window_t = glfw.CreateWindow(
+		app.pip.window_size.x,
+		app.pip.window_size.y,
 		strings.clone_to_cstring(app.title),
 		nil,
 		nil,
 	)
+	app.pip.window_handle = handle
 
-	if app.window.handle == nil {
+	if app.pip.window_handle == nil {
 		fmt.println("failed to create window")
 		return
 	}
 
-	glfw.MakeContextCurrent(app.window.handle)
+	glfw.MakeContextCurrent(app.pip.window_handle.(glfw.WindowHandle))
 	glfw.SwapInterval(0)
 
 	gl.load_up_to(GL_MAJOR_VERSION, GL_MINOR_VERSION, glfw.gl_set_proc_address)
-	gl.Viewport(0, 0, app.window.width, app.window.height)
+	gl.Viewport(0, 0, app.pip.window_size.x, app.pip.window_size.y)
 
-	glfw.SetKeyCallback(app.window.handle, core.inputs_listen_to_glfw_keys)
-	glfw.SetMouseButtonCallback(app.window.handle, core.inputs_listen_to_glfw_mouse_buttons)
-	glfw.SetFramebufferSizeCallback(app.window.handle, framebuffer_size_cb)
+	glfw.SetKeyCallback(app.pip.window_handle.(glfw.WindowHandle), core.inputs_listen_to_glfw_keys)
+	glfw.SetMouseButtonCallback(
+		app.pip.window_handle.(glfw.WindowHandle),
+		core.inputs_listen_to_glfw_mouse_buttons,
+	)
+	glfw.SetFramebufferSizeCallback(app.pip.window_handle.(glfw.WindowHandle), framebuffer_size_cb)
 
 
 	fmt.println("luna initialisation completed")

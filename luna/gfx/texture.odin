@@ -1,16 +1,14 @@
 package luna_gfx
 
-import "../core"
-
 import "core:fmt"
 import gl "vendor:OpenGL"
 
 texture_t :: struct {
 	id:     u32,
-	sprite: ^core.sprite_t,
+	sprite: ^sprite_t,
 }
 
-texture_init :: proc(sprite: ^core.sprite_t) -> texture_t {
+texture_init :: proc(sprite: ^sprite_t) -> texture_t {
 	t := texture_t{}
 	t.sprite = sprite
 
