@@ -11,24 +11,24 @@ import "vendor:glfw"
 main :: proc() {
 
 	app_run(
-		&{
+		app = &{
 			setup_cb = setup,
 			init_cb = init,
 			update_cb = update,
 			draw_cb = draw,
 			deinit_cb = deinit,
 			title = "luna",
-			pip = {
-				backend = gfx.supported_backend_e.opengl,
-				view_mode = gfx.view_mode_e.two_d,
-				clear_color = base.COLOR_CRIMSON,
-				game_camera = {
-					position = base.vec2{0, 0},
-					dimentions = base.vec2{base.DEFAULT_WINDOW_WIDTH, base.DEFAULT_WINDOW_HEIGHT},
-					zoom = 1,
-				},
-				window_size = {base.DEFAULT_WINDOW_WIDTH, base.DEFAULT_WINDOW_HEIGHT},
+		},
+		pip = &{
+			backend = gfx.supported_backend_e.opengl,
+			view_mode = gfx.view_mode_e.two_d,
+			clear_color = base.COLOR_CRIMSON,
+			game_camera = {
+				position = base.vec2{0, 0},
+				dimentions = base.vec2{base.DEFAULT_WINDOW_WIDTH, base.DEFAULT_WINDOW_HEIGHT},
+				zoom = 1,
 			},
+			window_size = {base.DEFAULT_WINDOW_WIDTH, base.DEFAULT_WINDOW_HEIGHT},
 		},
 	)
 }
@@ -41,6 +41,7 @@ car_sprite: gfx.sprite_t
 car_atlas: gfx.atlas_t
 
 shader: gfx.shader_t
+pos: base.vec2
 
 setup :: proc(app: ^app_t) {}
 
@@ -73,17 +74,21 @@ deinit :: proc(app: ^app_t) {
 }
 
 update :: proc(app: ^app_t) {
-	fmt.println(core.input.mouse.mouse_pos_world)
+	if core.inputs_key_down(.KEY_D) {pos.x += 50.0 * delta_time}
+	if core.inputs_key_down(.KEY_A) {pos.x -= 50.0 * delta_time}
+	if core.inputs_key_down(.KEY_S) {pos.y += 50.0 * delta_time}
+	if core.inputs_key_down(.KEY_W) {pos.y -= 50.0 * delta_time}
+
 }
 
 draw :: proc(app: ^app_t) {
 	gfx.shader_use(&shader)
 
-	gfx.renderer_begin(&app.pip)
-	gfx.renderer_update_camera(&app.pip.game_camera)
+	gfx.renderer_begin()
+	gfx.renderer_update_camera(&gfx.pip.game_camera)
 
 	gfx.batch_begin(&batch)
-	gfx.batch_add(&batch, 2, base.vec2{f32(glfw.GetTime()) * 10, 0}, base.vec2{1, 1})
+	gfx.batch_add(&batch, 2, pos, base.vec2{1, 1})
 	gfx.batch_add(&batch, 3, base.vec2{600, 100}, base.vec2{1, 1})
 
 	gfx.renderer_draw_batch(&batch)

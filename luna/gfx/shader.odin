@@ -8,6 +8,8 @@ import "core:strings"
 
 import gl "vendor:OpenGL"
 
+SHADER_ORTHOGRAPHIC_PROJ_UNIFORM :: "orthographic_projection"
+
 shader_t :: struct {
 	program: u32,
 }

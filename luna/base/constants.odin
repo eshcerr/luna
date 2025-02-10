@@ -62,3 +62,4 @@ log_err :: fmt.println
 
 DEFAULT_WINDOW_WIDTH :: 1280
 DEFAULT_WINDOW_HEIGHT :: 720
+

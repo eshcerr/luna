@@ -1,5 +1,6 @@
 package luna
 
+import "base"
 import "core"
 import "gfx"
 
@@ -9,9 +10,6 @@ import "core:strings"
 import gl "vendor:OpenGL"
 import "vendor:glfw"
 
-GL_MAJOR_VERSION :: 4
-GL_MINOR_VERSION :: 3
-
 app_t :: struct {
 	setup_cb:  proc(app: ^app_t),
 	init_cb:   proc(app: ^app_t),
@@ -20,33 +18,33 @@ app_t :: struct {
 	draw_cb:   proc(app: ^app_t),
 	deinit_cb: proc(app: ^app_t),
 	title:     string,
-	pip:       gfx.render_pipeline_t,
 	game_data: ^any,
 }
 
-delta_time: f64 = 0
+delta_time: f32 = 0
 @(private = "file")
-current_frame: f64 = 0
+current_frame: f32 = 0
 @(private = "file")
-last_frame: f64 = 0
+last_frame: f32 = 0
 
-app_run :: proc(app: ^app_t) {
-	gfx.pip = &app.pip
+app_run :: proc(app: ^app_t, pip: ^gfx.render_pipeline_t) {
+	gfx.pip = pip
+
 	app_setup(app)
 	app_init(app)
 	defer app_deinit(app)
 
-	for !glfw.WindowShouldClose(app.pip.window_handle.(glfw.WindowHandle)) {
-		current_frame = glfw.GetTime()
+	for !glfw.WindowShouldClose(pip.window_handle.(glfw.WindowHandle)) {
+		current_frame = f32(glfw.GetTime())
 		delta_time = current_frame - last_frame
 		last_frame = current_frame
 		//fmt.println(60.0 / delta_time)
-		glfw.SwapBuffers(app.pip.window_handle.(glfw.WindowHandle))
+		glfw.SwapBuffers(pip.window_handle.(glfw.WindowHandle))
 
 		// reset inputs values
 		core.inputs_update()
 		glfw.PollEvents()
-		core.inputs_update_mouse(app.pip.window_handle.(glfw.WindowHandle))
+		core.inputs_update_mouse(pip.window_handle.(glfw.WindowHandle))
 
 		app.update_cb(app)
 		app.draw_cb(app)
@@ -55,62 +53,33 @@ app_run :: proc(app: ^app_t) {
 
 @(private = "file")
 app_setup :: proc(app: ^app_t) {
-	glfw.WindowHint(glfw.CONTEXT_VERSION_MAJOR, GL_MAJOR_VERSION)
-	glfw.WindowHint(glfw.CONTEXT_VERSION_MINOR, GL_MINOR_VERSION)
-	glfw.WindowHint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE)
-	glfw.WindowHint(glfw.OPENGL_FORWARD_COMPAT, true)
-	glfw.WindowHint(glfw.CLIENT_API, glfw.OPENGL_API)
-	glfw.WindowHint(glfw.DOUBLEBUFFER, true)
-
-	if glfw.Init() != true {
-		fmt.println("failed to init glfw")
-		return
-	}
-
+	gfx.render_pipeline_setup()
 	app.setup_cb(app)
 }
 
 @(private = "file")
 app_init :: proc(app: ^app_t) {
-	handle: gfx.window_t = glfw.CreateWindow(
-		app.pip.window_size.x,
-		app.pip.window_size.y,
-		strings.clone_to_cstring(app.title),
-		nil,
-		nil,
-	)
-	app.pip.window_handle = handle
+	gfx.render_pipeline_init(app.title)
 
-	if app.pip.window_handle == nil {
-		fmt.println("failed to create window")
-		return
-	}
-
-	glfw.MakeContextCurrent(app.pip.window_handle.(glfw.WindowHandle))
-	glfw.SwapInterval(0)
-
-	gl.load_up_to(GL_MAJOR_VERSION, GL_MINOR_VERSION, glfw.gl_set_proc_address)
-	gl.Viewport(0, 0, app.pip.window_size.x, app.pip.window_size.y)
-
-	glfw.SetKeyCallback(app.pip.window_handle.(glfw.WindowHandle), core.inputs_listen_to_glfw_keys)
+	// TODO : move to input init 
+	glfw.SetKeyCallback(gfx.pip.window_handle.(glfw.WindowHandle), core.inputs_listen_to_glfw_keys)
 	glfw.SetMouseButtonCallback(
-		app.pip.window_handle.(glfw.WindowHandle),
+		gfx.pip.window_handle.(glfw.WindowHandle),
 		core.inputs_listen_to_glfw_mouse_buttons,
 	)
-	glfw.SetFramebufferSizeCallback(app.pip.window_handle.(glfw.WindowHandle), framebuffer_size_cb)
+	glfw.SetFramebufferSizeCallback(gfx.pip.window_handle.(glfw.WindowHandle), framebuffer_size_cb)
 
-
-	fmt.println("luna initialisation completed")
 	app.init_cb(app)
 }
 
 @(private = "file")
 app_deinit :: proc(app: ^app_t) {
 	app.deinit_cb(app)
-	glfw.Terminate()
+	gfx.render_pipeline_deinit()
 }
 
 @(private = "file")
 framebuffer_size_cb :: proc "c" (window: glfw.WindowHandle, width, height: i32) {
 	gl.Viewport(0, 0, width, height)
+	gfx.pip.window_size = base.ivec2{width, height}
 }

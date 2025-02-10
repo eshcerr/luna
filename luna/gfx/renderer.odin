@@ -36,7 +36,7 @@ renderer_deinit :: proc(renderer: ^renderer_t) {
 	gl.DeleteVertexArrays(1, &renderer.vao)
 }
 
-renderer_begin :: proc(pip: ^render_pipeline_t) {
+renderer_begin :: proc() {
 	gl.ClearColor(pip.clear_color.r, pip.clear_color.g, pip.clear_color.b, pip.clear_color.a)
 	gl.ClearDepth(0)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
@@ -48,7 +48,7 @@ renderer_update_camera :: proc(camera: ^camera_t) {
 	game_camera_proj := camera_projection(camera)
 
 	gl.UniformMatrix4fv(
-		gl.GetUniformLocation(u32(shader), strings.clone_to_cstring("orthographic_projection")),
+		gl.GetUniformLocation(u32(shader), strings.clone_to_cstring(SHADER_ORTHOGRAPHIC_PROJ_UNIFORM)),
 		1,
 		false,
 		&game_camera_proj[0][0],
