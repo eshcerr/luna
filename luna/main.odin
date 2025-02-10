@@ -4,6 +4,8 @@ import "base"
 import "core"
 import "gfx"
 
+import "core:fmt"
+
 import "vendor:glfw"
 
 main :: proc() {
@@ -70,7 +72,9 @@ deinit :: proc(app: ^app_t) {
 	core.sprite_deinit(&car_sprite)
 }
 
-update :: proc(app: ^app_t) {}
+update :: proc(app: ^app_t) {
+	fmt.println(core.inputs_mouse_button_down(.MOUSE_BUTTON_2))
+}
 
 draw :: proc(app: ^app_t) {
 	gfx.shader_use(&shader)

@@ -46,7 +46,11 @@ app_run :: proc(app: ^app_t) {
 		delta_time = current_frame - last_frame
 		last_frame = current_frame
 		//fmt.println(60.0 / delta_time)
-		glfw.SwapBuffers((app.window.handle))
+		glfw.SwapBuffers(app.window.handle)
+
+		core.inputs_update()
+		core.inputs_update_mouse(app.window.handle)
+		
 		glfw.PollEvents()
 		
 		app.update_cb(app)

@@ -281,7 +281,8 @@ inputs_update :: proc() {
 
 inputs_update_mouse :: proc(window: glfw.WindowHandle) {
 	input.mouse.prev_mouse_pos = input.mouse.mouse_pos
-	input.mouse.mouse_pos = glfw.GetCursorPos(window)
+	x, y := glfw.GetCursorPos(window)
+	input.mouse.mouse_pos = base.ivec2{i32(x), i32(y)}
 	input.mouse.delta = input.mouse.prev_mouse_pos - input.mouse.mouse_pos
 }
 
@@ -296,7 +297,21 @@ inputs_key_released :: proc(keycode: keycode_e) -> bool {
 }
 
 inputs_key_down :: proc(keycode: keycode_e) -> bool {
-	return input.keyboard.keys[u32(keycode)].is_down
+	return input.keyboard.keys[keycode].is_down
+}
+
+inputs_mouse_button_pressed :: proc(mouse_button: mouse_buttons_e) -> bool {
+	button := input.mouse.buttons[mouse_button]
+	return button.is_down && button.half_transition_count == 1 || button.half_transition_count > 1
+}
+
+inputs_mouse_button_released :: proc(mouse_button: mouse_buttons_e) -> bool {
+	button := input.mouse.buttons[mouse_button]
+	return !button.is_down && button.half_transition_count == 1 || button.half_transition_count > 1
+}
+
+inputs_mouse_button_down :: proc(mouse_button: mouse_buttons_e) -> bool {
+	return input.mouse.buttons[mouse_button].is_down
 }
 
 inputs_listen_to_glfw_keys :: proc "c" (
@@ -304,7 +319,7 @@ inputs_listen_to_glfw_keys :: proc "c" (
 	key: c.int,
 	scancode, action, mods: c.int,
 ) {
-	is_down: bool = (action == glfw.PRESS || action == glfw.RELEASE)
+	is_down: bool = (action == glfw.PRESS || action == glfw.REPEAT)
 	keycode := glfw_key_lookup_table[key]
 	p_key := &input.keyboard.keys[keycode]
 
@@ -318,7 +333,7 @@ inputs_listen_to_glfw_mouse_buttons :: proc "c" (
 	window: glfw.WindowHandle,
 	button, action, mods: c.int,
 ) {
-	is_down: bool = (action == glfw.PRESS || action == glfw.RELEASE)
+	is_down: bool = (action == glfw.PRESS || action == glfw.REPEAT)
 	button_code := glfw_mouse_buttons_lookup_table[button]
 	p_button := &input.mouse.buttons[button_code]
 
