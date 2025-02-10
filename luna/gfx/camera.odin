@@ -15,7 +15,7 @@ camera_t :: struct {
 }
 
 camera_projection :: proc(camera: ^camera_t) -> base.mat4 {
-	return linalg.matrix_ortho3d_f32(
+	return linalg.matrix_ortho3d(
 		camera.position.x - camera.dimentions.x / 2.0,
 		camera.position.x + camera.dimentions.x / 2.0,
 		camera.position.y + camera.dimentions.y / 2.0 + camera.dimentions.y,

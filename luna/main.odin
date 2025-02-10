@@ -95,7 +95,7 @@ draw :: proc(app: ^app_t) {
 	gfx.renderer_update_camera(&gfx.pip.game_camera)
 
 	gfx.batch_begin(&batch)
-	gfx.batch_add(&batch, 0, pos, base.vec2{1, 1})
+	gfx.batch_add(&batch, 2, pos, base.vec2{1, 1})
 	gfx.batch_add(&batch, 3, base.vec2{700, 700}, base.vec2{1, 1})
 
 	gfx.renderer_draw_batch(&batch)
