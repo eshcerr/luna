@@ -10,44 +10,57 @@ import "core:strings"
 import gl "vendor:OpenGL"
 import "vendor:glfw"
 
+
 app_t :: struct {
-	setup_cb:  proc(app: ^app_t),
-	init_cb:   proc(app: ^app_t),
-	event_cb:  proc(app: ^app_t),
-	update_cb: proc(app: ^app_t),
-	draw_cb:   proc(app: ^app_t),
-	deinit_cb: proc(app: ^app_t),
-	title:     string,
-	game_data: ^any,
+	setup_cb:                                         proc(app: ^app_t),
+	init_cb:                                          proc(app: ^app_t),
+	event_cb:                                         proc(app: ^app_t),
+	update_cb:                                        proc(app: ^app_t),
+	draw_cb:                                          proc(
+		app: ^app_t,
+		interpolated_delta_time: f32,
+	),
+	deinit_cb:                                        proc(app: ^app_t),
+	title:                                            string,
+	delta_time, fixed_delta_time, update_per_seconds: f32,
+	game_data:                                        ^any,
 }
 
-delta_time: f32 = 0
-@(private = "file")
-current_frame: f32 = 0
-@(private = "file")
-last_frame: f32 = 0
 
 app_run :: proc(app: ^app_t, pip: ^gfx.render_pipeline_t) {
 	gfx.pip = pip
+
+	app.fixed_delta_time = 1.0 / app.update_per_seconds
 
 	app_setup(app)
 	app_init(app)
 	defer app_deinit(app)
 
+	current_frame: f32 = 0
+	last_frame: f32 = 0
+	timer: f32 = 0.0
+
+	// update loop
 	for !glfw.WindowShouldClose(pip.window_handle.(glfw.WindowHandle)) {
 		current_frame = f32(glfw.GetTime())
-		delta_time = current_frame - last_frame
+		app.delta_time = current_frame - last_frame
 		last_frame = current_frame
-		//fmt.println(60.0 / delta_time)
+
 		glfw.SwapBuffers(pip.window_handle.(glfw.WindowHandle))
+		timer += app.delta_time
+		// fixed update loop
+		for timer >= app.fixed_delta_time {
+			timer -= app.fixed_delta_time
+			// reset inputs values
+			core.inputs_update()
+			glfw.PollEvents()
+			core.inputs_update_mouse(pip.window_handle.(glfw.WindowHandle))
 
-		// reset inputs values
-		core.inputs_update()
-		glfw.PollEvents()
-		core.inputs_update_mouse(pip.window_handle.(glfw.WindowHandle))
+			app.update_cb(app)
+		}
 
-		app.update_cb(app)
-		app.draw_cb(app)
+		interpolated_delta_time := timer / app.fixed_delta_time
+		app.draw_cb(app, interpolated_delta_time)
 	}
 }
 

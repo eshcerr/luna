@@ -2,6 +2,8 @@ package luna_core
 
 import "../base"
 
+// bitmask here
+//https://code.tutsplus.com/how-to-use-tile-bitmasking-to-auto-tile-your-level-layouts--cms-25673t
 tile_t :: struct {
 	neighbours_mask: u32,
 	is_visible:      bool,
