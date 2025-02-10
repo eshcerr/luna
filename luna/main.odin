@@ -24,7 +24,10 @@ main :: proc() {
 			view_mode = gfx.view_mode_e.two_d,
 			clear_color = base.COLOR_CRIMSON,
 			game_camera = {
-				position = base.vec2{0, 0},
+				position = base.vec2 {
+					base.DEFAULT_WINDOW_WIDTH / 2,
+					-base.DEFAULT_WINDOW_HEIGHT / 2,
+				},
 				dimentions = base.vec2{base.DEFAULT_WINDOW_WIDTH, base.DEFAULT_WINDOW_HEIGHT},
 				zoom = 1,
 			},
@@ -53,7 +56,7 @@ init :: proc(app: ^app_t) {
 	car_atlas = gfx.atlas_init(
 		&car_sprite,
 		{
-			0 = base.iaabb{0, 0, 500, 500},
+			0 = base.iaabb{0, 0, 2, 2},
 			1 = base.iaabb{500, 0, 500, 500},
 			2 = base.iaabb{0, 500, 500, 500},
 			3 = base.iaabb{500, 500, 500, 500},
@@ -74,11 +77,15 @@ deinit :: proc(app: ^app_t) {
 }
 
 update :: proc(app: ^app_t) {
+
 	if core.inputs_key_down(.KEY_D) {pos.x += 50.0 * delta_time}
 	if core.inputs_key_down(.KEY_A) {pos.x -= 50.0 * delta_time}
 	if core.inputs_key_down(.KEY_S) {pos.y += 50.0 * delta_time}
 	if core.inputs_key_down(.KEY_W) {pos.y -= 50.0 * delta_time}
 
+	fmt.println(core.input.mouse.mouse_pos_world)
+	fmt.println(pos)
+	fmt.println("")
 }
 
 draw :: proc(app: ^app_t) {
@@ -88,8 +95,8 @@ draw :: proc(app: ^app_t) {
 	gfx.renderer_update_camera(&gfx.pip.game_camera)
 
 	gfx.batch_begin(&batch)
-	gfx.batch_add(&batch, 2, pos, base.vec2{1, 1})
-	gfx.batch_add(&batch, 3, base.vec2{600, 100}, base.vec2{1, 1})
+	gfx.batch_add(&batch, 0, pos, base.vec2{1, 1})
+	gfx.batch_add(&batch, 3, base.vec2{700, 700}, base.vec2{1, 1})
 
 	gfx.renderer_draw_batch(&batch)
 }

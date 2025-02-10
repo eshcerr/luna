@@ -1,6 +1,7 @@
 package luna_gfx
 
 import "../base"
+import "core:math/linalg"
 
 camera_mode_t :: enum {
 	orthographic,
@@ -14,16 +15,21 @@ camera_t :: struct {
 }
 
 camera_projection :: proc(camera: ^camera_t) -> base.mat4 {
-	return base.mat4_orthographic_projection(
-		(camera.position.x - camera.dimentions.x / 2) / camera.zoom,
-		(camera.position.x + camera.dimentions.x / 2) / camera.zoom,
-		(camera.position.y - camera.dimentions.y / 2) / camera.zoom,
-		(camera.position.y + camera.dimentions.y / 2) / camera.zoom,
+	return linalg.matrix_ortho3d_f32(
+		camera.position.x - camera.dimentions.x / 2.0,
+		camera.position.x + camera.dimentions.x / 2.0,
+		camera.position.y + camera.dimentions.y / 2.0 + camera.dimentions.y,
+		camera.position.y - camera.dimentions.y / 2.0 + camera.dimentions.y,
+		-1,
+		1,
 	)
 }
 
 camera_screen_to_world :: proc(screen_pos: base.ivec2) -> base.vec2 {
-	position := base.ivec2_to_vec2(screen_pos) / base.ivec2_to_vec2(pip.window_size) * pip.game_camera.dimentions
-	position += -pip.game_camera.dimentions / 2.0 - pip.game_camera.position
-    return position
+	position :=
+		base.ivec2_to_vec2(screen_pos) /
+		base.ivec2_to_vec2(pip.window_size) *
+		pip.game_camera.dimentions
+	position += -pip.game_camera.dimentions / 2.0 + (pip.game_camera.position * base.vec2{1, -1})
+	return position
 }
