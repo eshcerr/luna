@@ -4,7 +4,6 @@ import "base"
 import "core"
 import "gfx"
 
-import "core:fmt"
 import "core:strings"
 
 import gl "vendor:OpenGL"

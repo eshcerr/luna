@@ -19,7 +19,7 @@ main :: proc() {
 			draw_cb = draw,
 			deinit_cb = deinit,
 			title = "luna",
-			update_per_seconds = 30,
+			update_per_seconds = 60,
 		},
 		pip = &{
 			backend = gfx.supported_backend_e.opengl,
@@ -27,10 +27,10 @@ main :: proc() {
 			clear_color = base.COLOR_CRIMSON,
 			game_camera = {
 				position   = base.vec2 { 	// [0, 0] on top left
-					base.DEFAULT_WINDOW_WIDTH / 2,
-					-base.DEFAULT_WINDOW_HEIGHT / 2,
+					180,
+					-90,
 				},
-				dimentions = base.vec2{base.DEFAULT_WINDOW_WIDTH, base.DEFAULT_WINDOW_HEIGHT},
+				dimentions = base.vec2{360, 180},
 				zoom       = 1,
 			},
 			window_size = {base.DEFAULT_WINDOW_WIDTH, base.DEFAULT_WINDOW_HEIGHT},

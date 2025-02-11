@@ -1,6 +1,5 @@
 package luna_gfx
 
-import "core:fmt"
 import gl "vendor:OpenGL"
 
 texture_t :: struct {

@@ -2,7 +2,6 @@ package luna_gfx
 
 import "../base"
 
-import "core:fmt"
 import "core:strings"
 
 import gl "vendor:OpenGL"
@@ -52,7 +51,7 @@ render_pipeline_setup :: proc() {
 	glfw.WindowHint(glfw.DOUBLEBUFFER, true)
 
 	if glfw.Init() != true {
-		fmt.println("failed to init glfw")
+		base.log_err("failed to init glfw")
 		return
 	}
 }
@@ -68,7 +67,7 @@ render_pipeline_init :: proc(window_title: string) {
 	pip.window_handle = handle
 
 	if pip.window_handle == nil {
-		fmt.println("failed to create window")
+		base.log_err("failed to create window")
 		return
 	}
 

@@ -2,7 +2,6 @@ package luna_gfx
 
 import "../base"
 
-import "core:fmt"
 import "core:os"
 import "core:strings"
 
