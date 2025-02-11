@@ -3,6 +3,8 @@ package luna
 import "base"
 import "core"
 import "gfx"
+import "sfx"
+import "assets"
 
 import "core:strings"
 
@@ -26,8 +28,9 @@ app_t :: struct {
 }
 
 
-app_run :: proc(app: ^app_t, pip: ^gfx.render_pipeline_t) {
-	gfx.pip = pip
+app_run :: proc(app: ^app_t, render_pip: ^gfx.render_pipeline_t, asset_pip: ^assets.asset_pipeline_t) {
+	gfx.pip = render_pip
+	assets.pip = asset_pip
 
 	app.fixed_delta_time = 1.0 / app.update_per_seconds
 
@@ -40,12 +43,12 @@ app_run :: proc(app: ^app_t, pip: ^gfx.render_pipeline_t) {
 	timer: f32 = 0.0
 
 	// update loop
-	for !glfw.WindowShouldClose(pip.window_handle.(glfw.WindowHandle)) {
+	for !glfw.WindowShouldClose(render_pip.window_handle.(glfw.WindowHandle)) {
 		current_frame = f32(glfw.GetTime())
 		app.delta_time = current_frame - last_frame
 		last_frame = current_frame
 
-		glfw.SwapBuffers(pip.window_handle.(glfw.WindowHandle))
+		glfw.SwapBuffers(render_pip.window_handle.(glfw.WindowHandle))
 		timer += app.delta_time
 		// fixed update loop
 		for timer >= app.fixed_delta_time {
@@ -53,7 +56,7 @@ app_run :: proc(app: ^app_t, pip: ^gfx.render_pipeline_t) {
 			// reset inputs values
 			core.inputs_update()
 			glfw.PollEvents()
-			core.inputs_update_mouse(pip.window_handle.(glfw.WindowHandle))
+			core.inputs_update_mouse(render_pip.window_handle.(glfw.WindowHandle))
 
 			app.update_cb(app)
 		}

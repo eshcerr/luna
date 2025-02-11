@@ -1,13 +1,16 @@
 package luna
 
+import "assets"
 import "base"
 import "core"
 import "gfx"
+import "sfx"
 
 import "core:fmt"
 import "core:math"
 
 import "vendor:glfw"
+
 
 main :: proc() {
 
@@ -21,7 +24,7 @@ main :: proc() {
 			title = "luna",
 			update_per_seconds = 60,
 		},
-		pip = &{
+		render_pip = &{
 			backend = gfx.supported_backend_e.opengl,
 			view_mode = gfx.view_mode_e.two_d,
 			clear_color = base.COLOR_CRIMSON,
@@ -34,6 +37,14 @@ main :: proc() {
 				zoom       = 1,
 			},
 			window_size = {base.DEFAULT_WINDOW_WIDTH, base.DEFAULT_WINDOW_HEIGHT},
+		},
+		asset_pip = &{
+			paths = {
+				assets.asset_type_e.IMAGE = "assets/images/",
+				assets.asset_type_e.SHADER = "assets/shaders/",
+				assets.asset_type_e.SFX = "assets/sfx/",
+				assets.asset_type_e.DATA = "assets/data/",
+			},
 		},
 	)
 }
@@ -51,9 +62,12 @@ setup :: proc(app: ^app_t) {}
 
 init :: proc(app: ^app_t) {
 	renderer = gfx.renderer_init()
-	shader = gfx.shader_init("luna/ogl/shader.vert.glsl", "luna/ogl/shader.frag.glsl")
+	shader = gfx.shader_init(
+		assets.get_path(.SHADER, "default.vert.glsl"),
+		assets.get_path(.SHADER, "default.frag.glsl"),
+	)
 
-	car_sprite = gfx.sprite_from_png("luna/car.png")
+	car_sprite = gfx.sprite_from_png(assets.get_path(.IMAGE, "car.png"))
 	car_atlas = gfx.atlas_init(
 		&car_sprite,
 		{
