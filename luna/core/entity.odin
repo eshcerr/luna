@@ -6,7 +6,7 @@ import "core:mem"
 
 entity_flags_e :: enum {
 	nil,
-	allocated,
+	ALLOCATED,
 }
 
 entity_kind_e :: enum {}
@@ -15,17 +15,17 @@ entity_handle_t :: u64
 user_id_t :: u64
 
 entity_t :: struct {
-	id:      entity_handle_t,
-	kind:    entity_kind_e,
-	flags:   bit_set[entity_flags_e],
-	user_id: user_id_t,
+	id:       entity_handle_t,
+	kind:     entity_kind_e,
+	flags:    bit_set[entity_flags_e],
+	user_id:  user_id_t,
 }
 
 entity_create :: proc(gs: ^game_state_t) -> ^entity_t {
 	spare_en: ^entity_t
 
 	for &en in gs.entities {
-		if !(.allocated in en.flags) {
+		if !(.ALLOCATED in en.flags) {
 			spare_en = &en
 			break
 		}
@@ -33,7 +33,7 @@ entity_create :: proc(gs: ^game_state_t) -> ^entity_t {
 
 	assert(spare_en != nil, "ran out of entities, increase size")
 
-    spare_en.flags = {.allocated}
+	spare_en.flags = {.ALLOCATED}
 	gs.latest_entity_handle += 1
 	spare_en.id = gs.latest_entity_handle
 	return spare_en

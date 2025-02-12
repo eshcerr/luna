@@ -55,6 +55,7 @@ batch: gfx.batch_t
 
 car_sprite: gfx.sprite_t
 car_atlas: gfx.atlas_t
+car_anim: gfx.animation_t
 
 shader: gfx.shader_t
 
@@ -71,12 +72,35 @@ init :: proc(app: ^app_t) {
 	car_atlas = gfx.atlas_init(
 		&car_sprite,
 		{
-			0 = base.iaabb{0, 0, 2, 2},
-			1 = base.iaabb{500, 0, 500, 500},
-			2 = base.iaabb{0, 500, 500, 500},
-			3 = base.iaabb{500, 500, 500, 500},
+			0 = base.iaabb{0, 500, 100, 500},
+			1 = base.iaabb{100, 500, 100, 500},
+			2 = base.iaabb{200, 500, 100, 500},
+			3 = base.iaabb{300, 500, 100, 500},
+			4 = base.iaabb{400, 500, 100, 500},
+			5 = base.iaabb{500, 500, 100, 500},
+			6 = base.iaabb{600, 500, 100, 500},
+			7 = base.iaabb{700, 500, 100, 500},
+			8 = base.iaabb{800, 500, 100, 500},
+			9 = base.iaabb{900, 500, 100, 500},
 		},
 	)
+
+	frames := make([]gfx.animation_frame_t, 10)
+	frames[0] = {duration = 0.05, atlas_rect = 0}
+	frames[1] = {duration = 0.05, atlas_rect = 1}
+	frames[2] = {duration = 0.05, atlas_rect = 2}
+	frames[3] = {duration = 0.05, atlas_rect = 3}
+	frames[4] = {duration = 0.05, atlas_rect = 4}
+	frames[5] = {duration = 0.05, atlas_rect = 5}
+	frames[6] = {duration = 0.05, atlas_rect = 6}
+	frames[7] = {duration = 0.05, atlas_rect = 7}
+	frames[8] = {duration = 0.05, atlas_rect = 8}
+	frames[9] = {duration = 0.05, atlas_rect = 9}
+
+	car_anim = gfx.animation_t {
+		frames = frames,
+	}
+	gfx.animation_start(&car_anim)
 
 	batch = gfx.batch_init(&car_atlas)
 }
@@ -86,7 +110,8 @@ deinit :: proc(app: ^app_t) {
 	gfx.batch_deinit(&batch)
 
 	gfx.shader_deinit(&shader)
-
+	
+	gfx.animation_deinit(&car_anim)
 	gfx.atlas_deinit(&car_atlas)
 	gfx.sprite_deinit(&car_sprite)
 }
@@ -99,6 +124,9 @@ update :: proc(app: ^app_t) {
 	if core.inputs_key_down(.KEY_A) {pos.x -= 100.0 * app.fixed_delta_time}
 	if core.inputs_key_down(.KEY_S) {pos.y += 100.0 * app.fixed_delta_time}
 	if core.inputs_key_down(.KEY_W) {pos.y -= 100.0 * app.fixed_delta_time}
+
+	gfx.animation_update(&car_anim, app.fixed_delta_time)
+
 }
 
 draw :: proc(app: ^app_t, interpolated_delta_time: f32) {
@@ -107,9 +135,14 @@ draw :: proc(app: ^app_t, interpolated_delta_time: f32) {
 	gfx.renderer_begin()
 	gfx.renderer_update_camera(&gfx.pip.game_camera)
 
+
 	gfx.batch_begin(&batch)
-	gfx.batch_add(&batch, 2, math.lerp(prev_pos, pos, interpolated_delta_time), base.vec2{1, 1})
-	gfx.batch_add(&batch, 3, base.vec2{700, 700}, base.vec2{1, 1})
+	gfx.batch_add(
+		&batch,
+		&car_anim,
+		math.lerp(prev_pos, pos, interpolated_delta_time),
+		base.vec2{1, 1},
+	)
 
 	gfx.renderer_draw_batch(&batch)
 }

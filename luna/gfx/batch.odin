@@ -58,6 +58,7 @@ batch_begin :: proc(batch: ^batch_t) {
 batch_add :: proc {
 	batch_add_item,
 	batch_add_from_atlas,
+	batch_add_from_animation,
 }
 
 batch_add_item :: proc(batch: ^batch_t, item: batch_item_t) {
@@ -71,4 +72,8 @@ batch_add_from_atlas :: proc(batch: ^batch_t, atlas_item: u32, position, scale: 
 	assert(is_ok, "unregistered atlas item")
 
 	append_elem(&batch.items, batch_item_t{rect = rect, position = position, scale = scale})
+}
+
+batch_add_from_animation :: proc(batch: ^batch_t, animation: ^animation_t, position, scale: base.vec2) {
+	batch_add_from_atlas(batch, animation_get_frame_rect(animation), position, scale)
 }
