@@ -62,11 +62,11 @@ shader: gfx.shader_t
 setup :: proc(app: ^app_t) {}
 
 init :: proc(app: ^app_t) {
+	test_shader := gfx.shader_init(assets.get_path(.SHADER, "test_no_tokens.glsl"))
+	defer gfx.shader_deinit(&test_shader)
+	
 	renderer = gfx.renderer_init()
-	shader = gfx.shader_init(
-		assets.get_path(.SHADER, "default.vert.glsl"),
-		assets.get_path(.SHADER, "default.frag.glsl"),
-	)
+	shader = gfx.shader_init(assets.get_path(.SHADER, "test_no_tokens.glsl"))
 
 	car_sprite = gfx.sprite_from_png(assets.get_path(.IMAGE, "car.png"))
 	car_atlas = gfx.atlas_init(

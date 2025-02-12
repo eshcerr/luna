@@ -43,6 +43,5 @@ void main()
 
     vec2 vertex_pos = vertices[gl_VertexID];
     gl_Position = orthographic_projection * vec4(vertex_pos, 0.0, 1.0);
-
     tex_coords = tex_coords_array[gl_VertexID];
 }

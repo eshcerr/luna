@@ -1,5 +1,4 @@
 #version 430 core
-out vec4 FragColor;
   
 layout (location = 0) in vec2 tex_coords;
 

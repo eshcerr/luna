@@ -7,17 +7,202 @@ import "core:strings"
 
 import gl "vendor:OpenGL"
 
+
 SHADER_ORTHOGRAPHIC_PROJ_UNIFORM :: "orthographic_projection"
+
+GLSL_VERSION :: "#version 430 core\n"
+
+GLSL_VERTEX_SHADER :: `
+struct batch_item_t {
+    ivec4 rect;
+    vec2 position;
+    vec2 scale;
+};
+layout (std430, binding = 0) buffer batch_sbo {
+    batch_item_t items[];
+};
+uniform mat4 orthographic_projection;
+layout (location = 0) out vec2 uv;
+
+void main()
+{
+    batch_item_t item = items[gl_InstanceID];
+
+    vec2 vertices[6] = {
+        item.position,
+        vec2(item.position + vec2(0.0, item.rect.w * item.scale.y)),
+        vec2(item.position + vec2(item.rect.z * item.scale.x, 0.0)),
+        vec2(item.position + vec2(item.rect.z * item.scale.x, 0.0)),
+        vec2(item.position + vec2(0.0, item.rect.w * item.scale.y)),
+        item.position + item.rect.zw * item.scale
+    };
+
+    float left = item.rect.x;
+    float top = item.rect.y;
+    float right = item.rect.x + item.rect.z;
+    float bottom = item.rect.y + item.rect.w;
+
+    vec2 uv_array[6] = {
+        vec2(left, top),
+        vec2(left, bottom),
+        vec2(right, top),
+        vec2(right, top),
+        vec2(left, bottom),
+        vec2(right, bottom)
+    };
+
+    vec2 vertex_pos = vertices[gl_VertexID];
+    gl_Position = orthographic_projection * vec4(vertex_pos, 0.0, 1.0);
+    uv = uv_array[gl_VertexID];
+`
+
+
+GLSL_FRAGMENT_SHADER :: `
+layout (location = 0) in vec2 uv;
+layout (location = 0) out vec4 frag_color;
+layout (location = 0) uniform sampler2D texture_atlas;
+
+void main()
+{
+    vec4 tex_color = texelFetch(texture_atlas, ivec2(uv), 0);
+    if (tex_color.a == 0.0) { discard; }
+    frag_color = tex_color;
+`
+
+
+LUNA_SHADER_TOKENS := #partial [shader_token_e]string {
+	.VERTEX_BEGIN   = "@vert", // start a vertex shader code block
+	.VERTEX_END     = "@endvert", // end a vertex shader block code
+	.VERTEX_NO      = "@novert", // specify that there will be no vertex shader code
+	.FRAGMENT_BEGIN = "@frag", // start a fragment shader code block
+	.FRAGMENT_END   = "@endfrag", // end a fragment shader block code
+	.FRAGMENT_NO    = "@nofrag", // specify that there will be no fragment shader code
+}
+
+shader_token_e :: enum {
+	VERTEX_BEGIN,
+	VERTEX_END,
+	VERTEX_NO,
+	FRAGMENT_BEGIN,
+	FRAGMENT_END,
+	FRAGMENT_NO,
+	COUNT,
+}
 
 shader_t :: struct {
 	program: u32,
 }
 
-shader_init :: proc(vert, frag: string) -> (s: shader_t = {}) {
-	program, is_ok := gl.load_shaders_file(vert, frag)
+shader_init :: proc {
+	shader_init_from_files,
+	shader_init_and_generate,
+}
+
+shader_init_from_files :: proc(vert_path, frag_path: string) -> shader_t {
+	program, is_ok := gl.load_shaders_file(vert_path, frag_path)
 	assert(is_ok, "shader loading failed")
-	s.program = program
-	return
+	return {program = program}
+}
+
+shader_init_and_generate :: proc(file_path: string) -> shader_t {
+	vertex_source, fragment_source := shader_generate_sources(file_path)
+
+	vertex, vertex_compile_ok := gl.compile_shader_from_source(vertex_source, gl.Shader_Type.VERTEX_SHADER)
+	assert(vertex_compile_ok, "failed to compile vertex shader sources")
+	fragment, fragment_compile_ok := gl.compile_shader_from_source(fragment_source, gl.Shader_Type.FRAGMENT_SHADER)
+	assert(fragment_compile_ok, "failed to compile vertex shader sources")
+	program, program_link_ok := gl.create_and_link_program({vertex, fragment})
+	assert(program_link_ok, "failed to link shader program")
+
+	gl.DeleteShader(vertex)
+	gl.DeleteShader(fragment)
+
+	return {program = program}
+}
+
+shader_generate_sources :: proc(shader_path: string) -> (string, string) {
+	file_source, is_ok := os.read_entire_file_from_filename(shader_path)
+	assert(is_ok, strings.concatenate({"failed to read file content of: ", shader_path}))
+	source := strings.trim_space(string(file_source))
+
+	has_novert := strings.contains(source, LUNA_SHADER_TOKENS[.VERTEX_NO])
+	has_vert_token :=
+		strings.contains(source, LUNA_SHADER_TOKENS[.VERTEX_BEGIN]) ||
+		strings.contains(source, LUNA_SHADER_TOKENS[.VERTEX_END])
+
+	assert(
+		!(has_novert && has_vert_token),
+		strings.concatenate(
+			{
+				"cannot use both ",
+				LUNA_SHADER_TOKENS[.VERTEX_BEGIN],
+				"/",
+				LUNA_SHADER_TOKENS[.VERTEX_END],
+				" and ",
+				LUNA_SHADER_TOKENS[.VERTEX_NO],
+				" in the same file.",
+			},
+		),
+	)
+
+	has_nofrag := strings.contains(source, LUNA_SHADER_TOKENS[.FRAGMENT_NO])
+	has_frag_token :=
+		strings.contains(source, LUNA_SHADER_TOKENS[.FRAGMENT_BEGIN]) ||
+		strings.contains(source, LUNA_SHADER_TOKENS[.FRAGMENT_END])
+
+	assert(
+		!(has_nofrag && has_frag_token),
+		strings.concatenate(
+			{
+				"cannot use both ",
+				LUNA_SHADER_TOKENS[.FRAGMENT_BEGIN],
+				"/",
+				LUNA_SHADER_TOKENS[.FRAGMENT_END],
+				" and ",
+				LUNA_SHADER_TOKENS[.FRAGMENT_NO],
+				" in the same file.",
+			},
+		),
+	)
+
+	vertex_source, fragment_source: string = "", ""
+
+	if has_vert_token {
+		vertex_source = shader_extract_code(
+			source,
+			LUNA_SHADER_TOKENS[.VERTEX_BEGIN],
+			LUNA_SHADER_TOKENS[.VERTEX_END],
+		)
+	}
+
+	if has_frag_token {
+		fragment_source = shader_extract_code(
+			source,
+			LUNA_SHADER_TOKENS[.FRAGMENT_BEGIN],
+			LUNA_SHADER_TOKENS[.FRAGMENT_END],
+		)
+	}
+
+	final_vertex_source := strings.concatenate(
+		{GLSL_VERSION, GLSL_VERTEX_SHADER, vertex_source, "\n}"},
+	)
+
+	final_fragment_source := strings.concatenate(
+		{GLSL_VERSION, GLSL_FRAGMENT_SHADER, fragment_source, "\n}"},
+	)
+
+	return final_vertex_source, final_fragment_source
+}
+
+shader_extract_code :: proc(source, begin_token, end_token: string) -> string {
+	start_index := strings.index(source, begin_token)
+	assert(start_index != -1, strings.concatenate({begin_token, " not found"}))
+	start_index += len(begin_token)
+
+	end_index := strings.index(source[start_index:], end_token)
+	assert(start_index != -1, strings.concatenate({end_token, " not found"}))
+
+	return strings.trim_space(source[start_index:start_index + end_index])
 }
 
 shader_deinit :: proc(shader: ^shader_t) {
