@@ -69,26 +69,6 @@ void main()
     frag_color = tex_color;
 `
 
-
-LUNA_SHADER_TOKENS := #partial [shader_token_e]string {
-	.VERTEX_BEGIN   = "@vert", // start a vertex shader code block
-	.VERTEX_END     = "@endvert", // end a vertex shader block code
-	.VERTEX_NO      = "@novert", // specify that there will be no vertex shader code
-	.FRAGMENT_BEGIN = "@frag", // start a fragment shader code block
-	.FRAGMENT_END   = "@endfrag", // end a fragment shader block code
-	.FRAGMENT_NO    = "@nofrag", // specify that there will be no fragment shader code
-}
-
-shader_token_e :: enum {
-	VERTEX_BEGIN,
-	VERTEX_END,
-	VERTEX_NO,
-	FRAGMENT_BEGIN,
-	FRAGMENT_END,
-	FRAGMENT_NO,
-	COUNT,
-}
-
 shader_t :: struct {
 	program: u32,
 }
@@ -121,45 +101,63 @@ shader_init_and_generate :: proc(file_path: string) -> shader_t {
 }
 
 shader_generate_sources :: proc(shader_path: string) -> (string, string) {
+	shader_token_e :: enum {
+		VERTEX_BEGIN,
+		VERTEX_END,
+		VERTEX_NO,
+		FRAGMENT_BEGIN,
+		FRAGMENT_END,
+		FRAGMENT_NO,
+	}
+
+	@static SHADER_TOKENS := [shader_token_e]string {
+		.VERTEX_BEGIN   = "@vert", // start a vertex shader code block
+		.VERTEX_END     = "@endvert", // end a vertex shader block code
+		.VERTEX_NO      = "@novert", // specify that there will be no vertex shader code
+		.FRAGMENT_BEGIN = "@frag", // start a fragment shader code block
+		.FRAGMENT_END   = "@endfrag", // end a fragment shader block code
+		.FRAGMENT_NO    = "@nofrag", // specify that there will be no fragment shader code
+	}
+	
 	file_source, is_ok := os.read_entire_file_from_filename(shader_path)
 	assert(is_ok, strings.concatenate({"failed to read file content of: ", shader_path}))
 	source := strings.trim_space(string(file_source))
 
-	has_novert := strings.contains(source, LUNA_SHADER_TOKENS[.VERTEX_NO])
+	has_novert := strings.contains(source, SHADER_TOKENS[.VERTEX_NO])
 	has_vert_token :=
-		strings.contains(source, LUNA_SHADER_TOKENS[.VERTEX_BEGIN]) ||
-		strings.contains(source, LUNA_SHADER_TOKENS[.VERTEX_END])
+		strings.contains(source, SHADER_TOKENS[.VERTEX_BEGIN]) ||
+		strings.contains(source, SHADER_TOKENS[.VERTEX_END])
 
 	assert(
 		!(has_novert && has_vert_token),
 		strings.concatenate(
 			{
 				"cannot use both ",
-				LUNA_SHADER_TOKENS[.VERTEX_BEGIN],
+				SHADER_TOKENS[.VERTEX_BEGIN],
 				"/",
-				LUNA_SHADER_TOKENS[.VERTEX_END],
+				SHADER_TOKENS[.VERTEX_END],
 				" and ",
-				LUNA_SHADER_TOKENS[.VERTEX_NO],
+				SHADER_TOKENS[.VERTEX_NO],
 				" in the same file.",
 			},
 		),
 	)
 
-	has_nofrag := strings.contains(source, LUNA_SHADER_TOKENS[.FRAGMENT_NO])
+	has_nofrag := strings.contains(source, SHADER_TOKENS[.FRAGMENT_NO])
 	has_frag_token :=
-		strings.contains(source, LUNA_SHADER_TOKENS[.FRAGMENT_BEGIN]) ||
-		strings.contains(source, LUNA_SHADER_TOKENS[.FRAGMENT_END])
+		strings.contains(source, SHADER_TOKENS[.FRAGMENT_BEGIN]) ||
+		strings.contains(source, SHADER_TOKENS[.FRAGMENT_END])
 
 	assert(
 		!(has_nofrag && has_frag_token),
 		strings.concatenate(
 			{
 				"cannot use both ",
-				LUNA_SHADER_TOKENS[.FRAGMENT_BEGIN],
+				SHADER_TOKENS[.FRAGMENT_BEGIN],
 				"/",
-				LUNA_SHADER_TOKENS[.FRAGMENT_END],
+				SHADER_TOKENS[.FRAGMENT_END],
 				" and ",
-				LUNA_SHADER_TOKENS[.FRAGMENT_NO],
+				SHADER_TOKENS[.FRAGMENT_NO],
 				" in the same file.",
 			},
 		),
@@ -170,16 +168,16 @@ shader_generate_sources :: proc(shader_path: string) -> (string, string) {
 	if has_vert_token {
 		vertex_source = shader_extract_code(
 			source,
-			LUNA_SHADER_TOKENS[.VERTEX_BEGIN],
-			LUNA_SHADER_TOKENS[.VERTEX_END],
+			SHADER_TOKENS[.VERTEX_BEGIN],
+			SHADER_TOKENS[.VERTEX_END],
 		)
 	}
 
 	if has_frag_token {
 		fragment_source = shader_extract_code(
 			source,
-			LUNA_SHADER_TOKENS[.FRAGMENT_BEGIN],
-			LUNA_SHADER_TOKENS[.FRAGMENT_END],
+			SHADER_TOKENS[.FRAGMENT_BEGIN],
+			SHADER_TOKENS[.FRAGMENT_END],
 		)
 	}
 
