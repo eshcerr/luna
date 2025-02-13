@@ -15,6 +15,14 @@ batch_t :: struct {
 batch_item_t :: struct #packed {
 	rect:            base.iaabb,
 	position, scale: base.vec2,
+	rotation:        f32,
+	options:         rendering_options_e,
+}
+
+rendering_options_e :: enum {
+	NONE   = 0,
+	FLIP_X = 0b01,
+	FLIP_Y = 0b10,
 }
 
 batch_init :: proc(atlas: ^atlas_t) -> batch_t {
@@ -66,14 +74,42 @@ batch_add_item :: proc(batch: ^batch_t, item: batch_item_t) {
 	append_elem(&batch.items, item)
 }
 
-batch_add_from_atlas :: proc(batch: ^batch_t, atlas_item: u32, position, scale: base.vec2) {
+batch_add_from_atlas :: proc(
+	batch: ^batch_t,
+	atlas_item: u32,
+	position, scale: base.vec2,
+	rotation: f32 = 0.0,
+	options: rendering_options_e = .NONE,
+) {
 	assert(len(batch.items) < MAX_BATCH_ITEM, "batch full")
 	rect, is_ok := batch.atlas.rects[atlas_item]
 	assert(is_ok, "unregistered atlas item")
 
-	append_elem(&batch.items, batch_item_t{rect = rect, position = position, scale = scale})
+	append_elem(
+		&batch.items,
+		batch_item_t {
+			rect = rect,
+			position = position,
+			scale = scale,
+			rotation = rotation,
+			options = options,
+		},
+	)
 }
 
-batch_add_from_animation :: proc(batch: ^batch_t, animation: ^animation_t, position, scale: base.vec2) {
-	batch_add_from_atlas(batch, animation_get_frame_rect(animation), position, scale)
+batch_add_from_animation :: proc(
+	batch: ^batch_t,
+	animation: ^animation_t,
+	position, scale: base.vec2,
+	rotation: f32 = 0.0,
+	options: rendering_options_e = .NONE,
+) {
+	batch_add_from_atlas(
+		batch,
+		animation_get_frame_rect(animation),
+		position,
+		scale,
+		rotation,
+		options,
+	)
 }

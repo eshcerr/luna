@@ -15,15 +15,11 @@ mat4 :: linalg.Matrix4x4f32
 
 aabb :: [4]f32
 iaabb :: [4]i32
-
 circle :: struct {
 	center: vec2,
-	radius:   f32,
+	radius: f32,
 }
-
-polygon :: struct {
-	points: []vec2,
-}
+polygon :: []vec2
 
 vec2_to_ivec2 :: proc(v: vec2) -> ivec2 {
 	return ivec2{i32(v.x), i32(v.y)}

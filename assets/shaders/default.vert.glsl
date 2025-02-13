@@ -4,6 +4,8 @@ struct batch_item_t {
     ivec4 rect;
     vec2 position;
     vec2 scale;
+    float rotation;
+    int options
 };
 
 layout (std430, binding = 0) buffer batch_sbo {

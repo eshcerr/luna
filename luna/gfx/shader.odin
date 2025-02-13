@@ -17,12 +17,17 @@ struct batch_item_t {
     ivec4 rect;
     vec2 position;
     vec2 scale;
+    float rotation;
+    uint options;
 };
 layout (std430, binding = 0) buffer batch_sbo {
     batch_item_t items[];
 };
 uniform mat4 orthographic_projection;
 layout (location = 0) out vec2 uv;
+
+uint OPTIONS_FLIP_X = 1 << 0;
+uint OPTIONS_FLIP_Y = 1 << 1;
 
 void main()
 {
@@ -41,6 +46,18 @@ void main()
     float top = item.rect.y;
     float right = item.rect.x + item.rect.z;
     float bottom = item.rect.y + item.rect.w;
+
+	if (bool(item.options & OPTIONS_FLIP_X)) {
+		float temp = left;
+		left = right;
+		right = temp;
+	}
+
+	if (bool(item.options & OPTIONS_FLIP_Y)) {
+		float temp = top;
+		top = bottom;
+		bottom = temp;
+	}
 
     vec2 uv_array[6] = {
         vec2(left, top),
@@ -69,6 +86,7 @@ void main()
     frag_color = tex_color;
 `
 
+
 shader_t :: struct {
 	program: u32,
 }
@@ -87,9 +105,15 @@ shader_init_from_files :: proc(vert_path, frag_path: string) -> shader_t {
 shader_init_and_generate :: proc(file_path: string) -> shader_t {
 	vertex_source, fragment_source := shader_generate_sources(file_path)
 
-	vertex, vertex_compile_ok := gl.compile_shader_from_source(vertex_source, gl.Shader_Type.VERTEX_SHADER)
+	vertex, vertex_compile_ok := gl.compile_shader_from_source(
+		vertex_source,
+		gl.Shader_Type.VERTEX_SHADER,
+	)
 	assert(vertex_compile_ok, "failed to compile vertex shader sources")
-	fragment, fragment_compile_ok := gl.compile_shader_from_source(fragment_source, gl.Shader_Type.FRAGMENT_SHADER)
+	fragment, fragment_compile_ok := gl.compile_shader_from_source(
+		fragment_source,
+		gl.Shader_Type.FRAGMENT_SHADER,
+	)
 	assert(fragment_compile_ok, "failed to compile vertex shader sources")
 	program, program_link_ok := gl.create_and_link_program({vertex, fragment})
 	assert(program_link_ok, "failed to link shader program")
@@ -110,7 +134,7 @@ shader_generate_sources :: proc(shader_path: string) -> (string, string) {
 		FRAGMENT_NO,
 	}
 
-	@static SHADER_TOKENS := [shader_token_e]string {
+	@(static) SHADER_TOKENS := [shader_token_e]string {
 		.VERTEX_BEGIN   = "@vert", // start a vertex shader code block
 		.VERTEX_END     = "@endvert", // end a vertex shader block code
 		.VERTEX_NO      = "@novert", // specify that there will be no vertex shader code
@@ -118,7 +142,7 @@ shader_generate_sources :: proc(shader_path: string) -> (string, string) {
 		.FRAGMENT_END   = "@endfrag", // end a fragment shader block code
 		.FRAGMENT_NO    = "@nofrag", // specify that there will be no fragment shader code
 	}
-	
+
 	file_source, is_ok := os.read_entire_file_from_filename(shader_path)
 	assert(is_ok, strings.concatenate({"failed to read file content of: ", shader_path}))
 	source := strings.trim_space(string(file_source))

@@ -6,6 +6,8 @@ layout (location = 0) out vec4 frag_color;
 
 layout (location = 0) uniform sampler2D tex_atlas;
 
+
+
 void main()
 {
     vec4 tex_color = texelFetch(tex_atlas, ivec2(tex_coords), 0);
