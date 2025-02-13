@@ -116,6 +116,37 @@ keycode_e :: enum {
 	COUNT = 255,
 }
 
+mouse_buttons_e :: enum {
+	MOUSE_BUTTON_1,
+	MOUSE_BUTTON_2,
+	MOUSE_BUTTON_3,
+	MOUSE_BUTTON_4,
+	MOUSE_BUTTON_5,
+	MOUSE_BUTTON_6,
+	MOUSE_BUTTON_7,
+	MOUSE_BUTTON_8,
+	COUNT,
+}
+
+gamepad_buttons_e :: enum {
+	GAMEPAD_BUTTON_A,
+	GAMEPAD_BUTTON_B,
+	GAMEPAD_BUTTON_X,
+	GAMEPAD_BUTTON_Y,
+	GAMEPAD_BUTTON_DPAD_LEFT,
+	GAMEPAD_BUTTON_DPAD_RIGHT,
+	GAMEPAD_BUTTON_DPAD_UP,
+	GAMEPAD_BUTTON_DPAD_DOWN,
+	GAMEPAD_BUTTON_LEFT_TRIGGER,
+	GAMEPAD_BUTTON_RIGHT_TRIGGER,
+	GAMEPAD_BUTTON_LEFT_BUMPER,
+	GAMEPAD_BUTTON_RIGHT_BUMPER,
+	GAMEPAD_BUTTON_BACK,
+	GAMEPAD_BUTTON_START,
+	GAMEPAD_BUTTON_GUIDE,
+	COUNT,
+}
+
 glfw_key_lookup_table: map[c.int]keycode_e = {
 	glfw.KEY_A             = keycode_e.KEY_A,
 	glfw.KEY_B             = keycode_e.KEY_B,
@@ -222,18 +253,6 @@ glfw_key_lookup_table: map[c.int]keycode_e = {
 	glfw.KEY_KP_DECIMAL    = keycode_e.KEY_NUMPAD_DECIMAL,
 }
 
-mouse_buttons_e :: enum {
-	MOUSE_BUTTON_1,
-	MOUSE_BUTTON_2,
-	MOUSE_BUTTON_3,
-	MOUSE_BUTTON_4,
-	MOUSE_BUTTON_5,
-	MOUSE_BUTTON_6,
-	MOUSE_BUTTON_7,
-	MOUSE_BUTTON_8,
-	COUNT = 8,
-}
-
 glfw_mouse_buttons_lookup_table: map[c.int]mouse_buttons_e = {
 	glfw.MOUSE_BUTTON_1 = mouse_buttons_e.MOUSE_BUTTON_1,
 	glfw.MOUSE_BUTTON_2 = mouse_buttons_e.MOUSE_BUTTON_2,
@@ -243,25 +262,6 @@ glfw_mouse_buttons_lookup_table: map[c.int]mouse_buttons_e = {
 	glfw.MOUSE_BUTTON_6 = mouse_buttons_e.MOUSE_BUTTON_6,
 	glfw.MOUSE_BUTTON_7 = mouse_buttons_e.MOUSE_BUTTON_7,
 	glfw.MOUSE_BUTTON_8 = mouse_buttons_e.MOUSE_BUTTON_8,
-}
-
-gamepad_buttons_e :: enum {
-	GAMEPAD_BUTTON_A,
-	GAMEPAD_BUTTON_B,
-	GAMEPAD_BUTTON_X,
-	GAMEPAD_BUTTON_Y,
-	GAMEPAD_BUTTON_DPAD_LEFT,
-	GAMEPAD_BUTTON_DPAD_RIGHT,
-	GAMEPAD_BUTTON_DPAD_UP,
-	GAMEPAD_BUTTON_DPAD_DOWN,
-	GAMEPAD_BUTTON_LEFT_TRIGGER,
-	GAMEPAD_BUTTON_RIGHT_TRIGGER,
-	GAMEPAD_BUTTON_LEFT_BUMPER,
-	GAMEPAD_BUTTON_RIGHT_BUMPER,
-	GAMEPAD_BUTTON_BACK,
-	GAMEPAD_BUTTON_START,
-	GAMEPAD_BUTTON_GUIDE,
-	COUNT,
 }
 
 glfw_gamepad_buttons_lookup_table: map[c.int]gamepad_buttons_e = {

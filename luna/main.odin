@@ -94,10 +94,8 @@ update :: proc(app: ^app_t) {
 	if core.inputs_key_down(.KEY_S) {pos.y += 100.0 * app.fixed_delta_time}
 	if core.inputs_key_down(.KEY_W) {pos.y -= 100.0 * app.fixed_delta_time}
 
-	base.log_info(core.inputs_gamepad_button_down(.GAMEPAD_BUTTON_A))
 	pos += 100.0 * core.input.gamepad.left_stick * app.fixed_delta_time
 
-	//gfx.animation_update(&car_anim, app.fixed_delta_time)
 	gfx.renderer_update_camera(&renderer, &gfx.pip.game_camera)
 }
 
