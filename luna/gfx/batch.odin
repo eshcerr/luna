@@ -1,6 +1,7 @@
 package luna_gfx
 
 import "../base"
+import "core:math"
 
 import gl "vendor:OpenGL"
 
@@ -91,7 +92,7 @@ batch_add_from_atlas :: proc(
 			rect = rect,
 			position = position,
 			scale = scale,
-			rotation = rotation,
+			rotation = math.to_radians_f32(rotation),
 			options = options,
 		},
 	)

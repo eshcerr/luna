@@ -7,7 +7,6 @@ import "core:strings"
 
 import gl "vendor:OpenGL"
 
-
 SHADER_ORTHOGRAPHIC_PROJ_UNIFORM :: "orthographic_projection"
 
 GLSL_VERSION :: "#version 430 core\n"
@@ -20,9 +19,11 @@ struct batch_item_t {
     float rotation;
     uint options;
 };
+
 layout (std430, binding = 0) buffer batch_sbo {
     batch_item_t items[];
 };
+
 uniform mat4 orthographic_projection;
 layout (location = 0) out vec2 uv;
 
@@ -32,13 +33,7 @@ uint OPTIONS_FLIP_Y = 1 << 1;
 void main()
 {
     batch_item_t item = items[gl_InstanceID];
-
-	mat2 rotation;
-	rotation[0] = vec2(cos(item.rotation), -sin(item.rotation));
-	rotation[1] = vec2(sin(item.rotation), cos(item.rotation));
-
-	vec2 origin = item.position + vec2(item.rect.z * item.scale.x, item.rect.w * item.scale.y) / 2.0;
-
+	
     vec2 vertices[6] = {
         item.position,
         vec2(item.position + vec2(0.0, item.rect.w * item.scale.y)),
@@ -46,12 +41,18 @@ void main()
         vec2(item.position + vec2(item.rect.z * item.scale.x, 0.0)),
         vec2(item.position + vec2(0.0, item.rect.w * item.scale.y)),
         item.position + item.rect.zw * item.scale
-    };
+	};
 
+	mat2 rotation;
+	rotation[0] = vec2(cos(item.rotation), -sin(item.rotation));
+	rotation[1] = vec2(sin(item.rotation), cos(item.rotation));
+
+	vec2 center = item.position + vec2(item.rect.z * item.scale.x, item.rect.w * item.scale.y) / 2.0;
+	
 	for (int i = 0; i <= 6; i++) {
-		vertices[i] = vertices[i] - origin;
+		vertices[i] = vertices[i] - center;
 		vertices[i] = vertices[i] * rotation;
-		vertices[i] = vertices[i] + origin;
+		vertices[i] = vertices[i] + center;
 	}
 
     float left = item.rect.x;
@@ -85,7 +86,6 @@ void main()
     uv = uv_array[gl_VertexID];
 `
 
-
 GLSL_FRAGMENT_SHADER :: `
 layout (location = 0) in vec2 uv;
 layout (location = 0) out vec4 frag_color;
@@ -97,7 +97,6 @@ void main()
     if (tex_color.a == 0.0) { discard; }
     frag_color = tex_color;
 `
-
 
 shader_t :: struct {
 	program: u32,
@@ -241,10 +240,6 @@ shader_extract_code :: proc(source, begin_token, end_token: string) -> string {
 
 shader_deinit :: proc(shader: ^shader_t) {
 	gl.DeleteProgram(shader.program)
-}
-
-shader_use :: proc(shader: ^shader_t) {
-	gl.UseProgram(shader.program)
 }
 
 shader_set_vec2 :: proc(shader: ^shader_t, name: string, v: base.vec2) {

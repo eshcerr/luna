@@ -6,7 +6,8 @@ import "core:strings"
 import gl "vendor:OpenGL"
 
 renderer_t :: struct {
-	vao, sbo: u32,
+	vao, sbo:         u32,
+	game_camera_proj: base.mat4,
 }
 
 renderer_init :: proc() -> renderer_t {
@@ -42,16 +43,20 @@ renderer_begin :: proc() {
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 }
 
-renderer_update_camera :: proc(camera: ^camera_t) {
-	shader: i32
-	gl.GetIntegerv(gl.CURRENT_PROGRAM, &shader)
-	game_camera_proj := camera_projection(camera)
+renderer_update_camera :: proc(renderer: ^renderer_t, camera: ^camera_t) {
+	renderer.game_camera_proj = camera_projection(camera)
+}
 
+renderer_use_shader :: proc(renderer: ^renderer_t, shader: ^shader_t) {
+	gl.UseProgram(shader.program)
 	gl.UniformMatrix4fv(
-		gl.GetUniformLocation(u32(shader), strings.clone_to_cstring(SHADER_ORTHOGRAPHIC_PROJ_UNIFORM)),
+		gl.GetUniformLocation(
+			shader.program,
+			strings.clone_to_cstring(SHADER_ORTHOGRAPHIC_PROJ_UNIFORM),
+		),
 		1,
 		false,
-		&game_camera_proj[0][0],
+		&renderer.game_camera_proj[0][0],
 	)
 }
 

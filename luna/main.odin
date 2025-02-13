@@ -63,16 +63,15 @@ setup :: proc(app: ^app_t) {}
 init :: proc(app: ^app_t) {
 	test_shader := gfx.shader_init(assets.get_path(.SHADER, "test_no_tokens.glsl"))
 	defer gfx.shader_deinit(&test_shader)
-	
+
 	renderer = gfx.renderer_init()
+	gfx.renderer_update_camera(&renderer, &gfx.pip.game_camera)
 	shader = gfx.shader_init(assets.get_path(.SHADER, "test_no_tokens.glsl"))
 
 	car_sprite = gfx.sprite_from_png(assets.get_path(.IMAGE, "test.png"))
 	car_atlas = gfx.atlas_init(
 		&car_sprite,
-		{
-			0 = base.iaabb{0, 0, car_sprite.width, car_sprite.height},
-		},
+		{0 = base.iaabb{0, 0, car_sprite.width, car_sprite.height}},
 	)
 
 	batch = gfx.batch_init(&car_atlas)
@@ -83,7 +82,7 @@ deinit :: proc(app: ^app_t) {
 	gfx.batch_deinit(&batch)
 
 	gfx.shader_deinit(&shader)
-	
+
 	//gfx.animation_deinit(&car_anim)
 	gfx.atlas_deinit(&car_atlas)
 	gfx.sprite_deinit(&car_sprite)
@@ -99,13 +98,13 @@ update :: proc(app: ^app_t) {
 	if core.inputs_key_down(.KEY_W) {pos.y -= 100.0 * app.fixed_delta_time}
 
 	//gfx.animation_update(&car_anim, app.fixed_delta_time)
+	gfx.renderer_update_camera(&renderer, &gfx.pip.game_camera)
 }
 
 draw :: proc(app: ^app_t, interpolated_delta_time: f32) {
-	gfx.shader_use(&shader)
+	gfx.renderer_use_shader(&renderer, &shader)
 
 	gfx.renderer_begin()
-	gfx.renderer_update_camera(&gfx.pip.game_camera)
 
 	gfx.batch_begin(&batch)
 	gfx.batch_add(
@@ -114,7 +113,6 @@ draw :: proc(app: ^app_t, interpolated_delta_time: f32) {
 		math.lerp(prev_pos, pos, interpolated_delta_time),
 		base.vec2{2, 2},
 		app.time,
-
 	)
 
 	gfx.renderer_draw_batch(&batch)
