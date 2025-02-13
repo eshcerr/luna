@@ -33,6 +33,12 @@ void main()
 {
     batch_item_t item = items[gl_InstanceID];
 
+	mat2 rotation;
+	rotation[0] = vec2(cos(item.rotation), -sin(item.rotation));
+	rotation[1] = vec2(sin(item.rotation), cos(item.rotation));
+
+	vec2 origin = item.position + vec2(item.rect.z * item.scale.x, item.rect.w * item.scale.y) / 2.0;
+
     vec2 vertices[6] = {
         item.position,
         vec2(item.position + vec2(0.0, item.rect.w * item.scale.y)),
@@ -41,6 +47,12 @@ void main()
         vec2(item.position + vec2(0.0, item.rect.w * item.scale.y)),
         item.position + item.rect.zw * item.scale
     };
+
+	for (int i = 0; i <= 6; i++) {
+		vertices[i] = vertices[i] - origin;
+		vertices[i] = vertices[i] * rotation;
+		vertices[i] = vertices[i] + origin;
+	}
 
     float left = item.rect.x;
     float top = item.rect.y;

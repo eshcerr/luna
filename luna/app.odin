@@ -1,10 +1,10 @@
 package luna
 
+import "assets"
 import "base"
 import "core"
 import "gfx"
 import "sfx"
-import "assets"
 
 import "core:strings"
 
@@ -13,22 +13,26 @@ import "vendor:glfw"
 
 
 app_t :: struct {
-	setup_cb:                                         proc(app: ^app_t),
-	init_cb:                                          proc(app: ^app_t),
-	event_cb:                                         proc(app: ^app_t),
-	update_cb:                                        proc(app: ^app_t),
-	draw_cb:                                          proc(
+	setup_cb:                                               proc(app: ^app_t),
+	init_cb:                                                proc(app: ^app_t),
+	event_cb:                                               proc(app: ^app_t),
+	update_cb:                                              proc(app: ^app_t),
+	draw_cb:                                                proc(
 		app: ^app_t,
 		interpolated_delta_time: f32,
 	),
-	deinit_cb:                                        proc(app: ^app_t),
-	title:                                            string,
-	delta_time, fixed_delta_time, update_per_seconds: f32,
-	game_data:                                        ^any,
+	deinit_cb:                                              proc(app: ^app_t),
+	title:                                                  string,
+	delta_time, fixed_delta_time, update_per_seconds, time: f32,
+	game_data:                                              ^any,
 }
 
 
-app_run :: proc(app: ^app_t, render_pip: ^gfx.render_pipeline_t, asset_pip: ^assets.asset_pipeline_t) {
+app_run :: proc(
+	app: ^app_t,
+	render_pip: ^gfx.render_pipeline_t,
+	asset_pip: ^assets.asset_pipeline_t,
+) {
 	gfx.pip = render_pip
 	assets.pip = asset_pip
 
@@ -41,6 +45,7 @@ app_run :: proc(app: ^app_t, render_pip: ^gfx.render_pipeline_t, asset_pip: ^ass
 	current_frame: f32 = 0
 	last_frame: f32 = 0
 	timer: f32 = 0.0
+	app.time = 0
 
 	// update loop
 	for !glfw.WindowShouldClose(render_pip.window_handle.(glfw.WindowHandle)) {
@@ -49,6 +54,7 @@ app_run :: proc(app: ^app_t, render_pip: ^gfx.render_pipeline_t, asset_pip: ^ass
 		last_frame = current_frame
 
 		glfw.SwapBuffers(render_pip.window_handle.(glfw.WindowHandle))
+		app.time += app.delta_time
 		timer += app.delta_time
 		// fixed update loop
 		for timer >= app.fixed_delta_time {

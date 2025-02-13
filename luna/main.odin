@@ -113,8 +113,7 @@ draw :: proc(app: ^app_t, interpolated_delta_time: f32) {
 		0,
 		math.lerp(prev_pos, pos, interpolated_delta_time),
 		base.vec2{2, 2},
-		0.0,
-		gfx.rendering_options_e.FLIP_Y | gfx.rendering_options_e.FLIP_X
+		app.time,
 
 	)
 
