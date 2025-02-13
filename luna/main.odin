@@ -119,7 +119,7 @@ draw :: proc(app: ^app_t, interpolated_delta_time: f32) {
 		math.lerp(prev_pos, pos, interpolated_delta_time),
 		base.vec2{2, 2},
 		app.time,
-		&car_mat,
+		nil,
 	)
 
 	gfx.renderer_draw_batch(&renderer, &batch)

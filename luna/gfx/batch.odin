@@ -1,6 +1,7 @@
 package luna_gfx
 
 import "../base"
+import "../utils"
 import "core:math"
 
 import gl "vendor:OpenGL"
@@ -72,26 +73,18 @@ batch_begin :: proc(batch: ^batch_t) {
 	append_elem(&batch.materials, material_default)
 }
 
-find_element :: proc(arr: ^$T/[dynamic]$E, target: E) -> i32 {
-	for v, i in arr {
-		if v == target {
-			return i32(i) // Return index if found
-		}
-	}
-	return -1 // Return -1 if not found
-}
-
-batch_get_material_id :: proc(batch: ^batch_t, material: ^material_t) -> u32 {
-	index := find_element(&batch.materials, material^)
+batch_get_or_create_material_id :: proc(batch: ^batch_t, material: ^material_t) -> u32 {
+	if material == nil {return 0}
+	index := utils.dynamic_array_find_element(&batch.materials, material^)
 	if index == -1 {
 		mat := material^
 		mat.color.r = math.pow_f32(material.color.r, 2.2)
 		mat.color.g = math.pow_f32(material.color.g, 2.2)
 		mat.color.b = math.pow_f32(material.color.b, 2.2)
 		mat.color.a = math.pow_f32(material.color.a, 2.2)
-		
-		append_elem(&batch.materials, mat)
-		return u32(len(batch.materials) - 1)
+
+		new_index, err := append_elem(&batch.materials, mat)
+		return u32(new_index)
 	}
 	return u32(index)
 }
@@ -119,18 +112,17 @@ batch_add_from_atlas :: proc(
 	rect, is_ok := batch.atlas.rects[atlas_item]
 	assert(is_ok, "unregistered atlas item")
 
-	item_to_add: batch_item_t = {
-		rect        = rect,
-		position    = position,
-		scale       = scale,
-		rotation    = math.to_radians_f32(rotation),
-		material_id = 0 if material == nil else batch_get_material_id(batch, material),
-		options     = options,
-	}
-
-	base.log_info("get material ", item_to_add.material_id)
-
-	append_elem(&batch.items, item_to_add)
+	append_elem(
+		&batch.items,
+		batch_item_t {
+			rect = rect,
+			position = position,
+			scale = scale,
+			rotation = math.to_radians_f32(rotation),
+			material_id = batch_get_or_create_material_id(batch, material),
+			options = options,
+		},
+	)
 }
 
 batch_add_from_animation :: proc(
