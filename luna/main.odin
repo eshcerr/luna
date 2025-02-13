@@ -42,6 +42,7 @@ main :: proc() {
 			paths = {
 				assets.asset_type_e.IMAGE = "assets/images/",
 				assets.asset_type_e.SHADER = "assets/shaders/",
+				assets.asset_type_e.FONT = "assets/fonts/",
 				assets.asset_type_e.SFX = "assets/sfx/",
 				assets.asset_type_e.DATA = "assets/data/",
 			},
@@ -57,13 +58,20 @@ car_sprite: gfx.sprite_t
 car_atlas: gfx.atlas_t
 
 shader: gfx.shader_t
+car_mat: gfx.material_t
 
 setup :: proc(app: ^app_t) {}
 
 init :: proc(app: ^app_t) {
 	renderer = gfx.renderer_init()
 	gfx.renderer_update_camera(&renderer, &gfx.pip.game_camera)
-	shader = gfx.shader_init(assets.get_path(.SHADER, "test_no_tokens.glsl"))
+	shader = gfx.shader_init(
+		assets.get_path(.SHADER, "test_no_tokens.glsl"),
+		gfx.shader_type_e.SPRITE,
+	)
+	car_mat = {
+		color = {0.3, 0.3, 0.3, 0.1},
+	}
 
 	car_sprite = gfx.sprite_from_png(assets.get_path(.IMAGE, "test.png"))
 	car_atlas = gfx.atlas_init(
@@ -111,7 +119,8 @@ draw :: proc(app: ^app_t, interpolated_delta_time: f32) {
 		math.lerp(prev_pos, pos, interpolated_delta_time),
 		base.vec2{2, 2},
 		app.time,
+		&car_mat,
 	)
 
-	gfx.renderer_draw_batch(&batch)
+	gfx.renderer_draw_batch(&renderer, &batch)
 }

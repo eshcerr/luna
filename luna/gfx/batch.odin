@@ -8,28 +8,32 @@ import gl "vendor:OpenGL"
 MAX_BATCH_ITEM :: 1024
 
 batch_t :: struct {
-	atlas:  ^atlas_t,
-	tex_id: u32,
-	items:  [dynamic]batch_item_t,
+	atlas:     ^atlas_t,
+	tex_id:    u32,
+	items:     [dynamic]batch_item_t,
+	materials: [dynamic]material_t,
 }
 
 batch_item_t :: struct #packed {
 	rect:            base.iaabb,
 	position, scale: base.vec2,
 	rotation:        f32,
+	material_id:     u32,
 	options:         rendering_options_e,
 }
 
 rendering_options_e :: enum {
 	NONE   = 0,
-	FLIP_X = 0b01,
-	FLIP_Y = 0b10,
+	FLIP_X = 0b001,
+	FLIP_Y = 0b010,
 }
 
 batch_init :: proc(atlas: ^atlas_t) -> batch_t {
 	batch: batch_t = {}
 	batch.atlas = atlas
 	batch.items = make_dynamic_array([dynamic]batch_item_t)
+	batch.materials = make_dynamic_array([dynamic]material_t)
+	append_elem(&batch.materials, material_default)
 
 	gl.GenTextures(1, &batch.tex_id)
 	gl.BindTexture(gl.TEXTURE_2D, batch.tex_id)
@@ -57,11 +61,39 @@ batch_init :: proc(atlas: ^atlas_t) -> batch_t {
 batch_deinit :: proc(batch: ^batch_t) {
 	clear_dynamic_array(&batch.items)
 	delete_dynamic_array(batch.items)
+	clear_dynamic_array(&batch.materials)
+	delete_dynamic_array(batch.materials)
 	gl.DeleteTextures(1, &batch.tex_id)
 }
 
 batch_begin :: proc(batch: ^batch_t) {
 	clear_dynamic_array(&batch.items)
+	clear_dynamic_array(&batch.materials)
+	append_elem(&batch.materials, material_default)
+}
+
+find_element :: proc(arr: ^$T/[dynamic]$E, target: E) -> i32 {
+	for v, i in arr {
+		if v == target {
+			return i32(i) // Return index if found
+		}
+	}
+	return -1 // Return -1 if not found
+}
+
+batch_get_material_id :: proc(batch: ^batch_t, material: ^material_t) -> u32 {
+	index := find_element(&batch.materials, material^)
+	if index == -1 {
+		mat := material^
+		mat.color.r = math.pow_f32(material.color.r, 2.2)
+		mat.color.g = math.pow_f32(material.color.g, 2.2)
+		mat.color.b = math.pow_f32(material.color.b, 2.2)
+		mat.color.a = math.pow_f32(material.color.a, 2.2)
+		
+		append_elem(&batch.materials, mat)
+		return u32(len(batch.materials) - 1)
+	}
+	return u32(index)
 }
 
 batch_add :: proc {
@@ -80,22 +112,25 @@ batch_add_from_atlas :: proc(
 	atlas_item: u32,
 	position, scale: base.vec2,
 	rotation: f32 = 0.0,
+	material: ^material_t = nil,
 	options: rendering_options_e = .NONE,
 ) {
 	assert(len(batch.items) < MAX_BATCH_ITEM, "batch full")
 	rect, is_ok := batch.atlas.rects[atlas_item]
 	assert(is_ok, "unregistered atlas item")
 
-	append_elem(
-		&batch.items,
-		batch_item_t {
-			rect = rect,
-			position = position,
-			scale = scale,
-			rotation = math.to_radians_f32(rotation),
-			options = options,
-		},
-	)
+	item_to_add: batch_item_t = {
+		rect        = rect,
+		position    = position,
+		scale       = scale,
+		rotation    = math.to_radians_f32(rotation),
+		material_id = 0 if material == nil else batch_get_material_id(batch, material),
+		options     = options,
+	}
+
+	base.log_info("get material ", item_to_add.material_id)
+
+	append_elem(&batch.items, item_to_add)
 }
 
 batch_add_from_animation :: proc(
@@ -103,6 +138,7 @@ batch_add_from_animation :: proc(
 	animation: ^animation_t,
 	position, scale: base.vec2,
 	rotation: f32 = 0.0,
+	material: ^material_t = nil,
 	options: rendering_options_e = .NONE,
 ) {
 	batch_add_from_atlas(
@@ -111,6 +147,7 @@ batch_add_from_animation :: proc(
 		position,
 		scale,
 		rotation,
+		material,
 		options,
 	)
 }

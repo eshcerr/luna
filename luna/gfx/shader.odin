@@ -17,6 +17,7 @@ struct batch_item_t {
     vec2 position;
     vec2 scale;
     float rotation;
+	uint material_id;
     uint options;
 };
 
@@ -25,7 +26,9 @@ layout (std430, binding = 0) buffer batch_sbo {
 };
 
 uniform mat4 orthographic_projection;
+
 layout (location = 0) out vec2 uv;
+layout (location = 1) out uint material_id;
 
 uint OPTIONS_FLIP_X = 1 << 0;
 uint OPTIONS_FLIP_Y = 1 << 1;
@@ -84,22 +87,49 @@ void main()
     vec2 vertex_pos = vertices[gl_VertexID];
     gl_Position = orthographic_projection * vec4(vertex_pos, 0.0, 1.0);
     uv = uv_array[gl_VertexID];
+	material_id = item.material_id;
 `
 
+
 GLSL_FRAGMENT_SHADER :: `
+struct material_t {
+	vec4 color;
+};
+
+layout (std430, binding = 1) buffer materials_sbo {
+    material_t materials[];
+};
+
 layout (location = 0) in vec2 uv;
+layout (location = 1) in flat uint material_id;
+
 layout (location = 0) out vec4 frag_color;
-layout (location = 0) uniform sampler2D texture_atlas;
+
+layout (binding = 0) uniform sampler2D texture_atlas;
 
 void main()
 {
+	material_t material = materials[material_id];
     vec4 tex_color = texelFetch(texture_atlas, ivec2(uv), 0);
+`
+
+GLSL_SPRITE_FRAGMENT_SHADER :: `
     if (tex_color.a == 0.0) { discard; }
-    frag_color = tex_color;
+    frag_color = tex_color * material.color;
+`
+
+GLSL_FONT_FRAGMENT_SHADER :: `
+    if (tex_color.r == 0.0) { discard; }
+    frag_color = tex_color.r * material.color;
 `
 
 shader_t :: struct {
 	program: u32,
+}
+
+shader_type_e :: enum {
+	SPRITE,
+	FONT,
 }
 
 shader_init :: proc {
@@ -113,8 +143,8 @@ shader_init_from_files :: proc(vert_path, frag_path: string) -> shader_t {
 	return {program = program}
 }
 
-shader_init_and_generate :: proc(file_path: string) -> shader_t {
-	vertex_source, fragment_source := shader_generate_sources(file_path)
+shader_init_and_generate :: proc(file_path: string, shader_type: shader_type_e) -> shader_t {
+	vertex_source, fragment_source := shader_generate_sources(file_path, shader_type)
 
 	vertex, vertex_compile_ok := gl.compile_shader_from_source(
 		vertex_source,
@@ -135,7 +165,7 @@ shader_init_and_generate :: proc(file_path: string) -> shader_t {
 	return {program = program}
 }
 
-shader_generate_sources :: proc(shader_path: string) -> (string, string) {
+shader_generate_sources :: proc(shader_path: string, shader_type: shader_type_e) -> (string, string) {
 	shader_token_e :: enum {
 		VERTEX_BEGIN,
 		VERTEX_END,
@@ -216,13 +246,33 @@ shader_generate_sources :: proc(shader_path: string) -> (string, string) {
 		)
 	}
 
-	final_vertex_source := strings.concatenate(
+	final_vertex_source, final_fragment_source: string
+
+	final_vertex_source = strings.concatenate(
 		{GLSL_VERSION, GLSL_VERTEX_SHADER, vertex_source, "\n}"},
 	)
 
-	final_fragment_source := strings.concatenate(
-		{GLSL_VERSION, GLSL_FRAGMENT_SHADER, fragment_source, "\n}"},
-	)
+	if shader_type == .SPRITE {
+		final_fragment_source = strings.concatenate(
+			{
+				GLSL_VERSION,
+				GLSL_FRAGMENT_SHADER,
+				GLSL_SPRITE_FRAGMENT_SHADER,
+				fragment_source,
+				"\n}",
+			},
+		)
+	} else {
+		final_fragment_source = strings.concatenate(
+			{
+				GLSL_VERSION,
+				GLSL_FRAGMENT_SHADER,
+				GLSL_FONT_FRAGMENT_SHADER,
+				fragment_source,
+				"\n}",
+			},
+		)
+	}
 
 	return final_vertex_source, final_fragment_source
 }

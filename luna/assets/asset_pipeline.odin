@@ -5,6 +5,7 @@ import "core:strings"
 asset_type_e :: enum {
 	IMAGE,
 	SHADER,
+	FONT,
 	SFX,
 	DATA,
 	COUNT,
