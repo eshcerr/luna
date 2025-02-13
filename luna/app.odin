@@ -63,6 +63,7 @@ app_run :: proc(
 			core.inputs_update()
 			glfw.PollEvents()
 			core.inputs_update_mouse(render_pip.window_handle.(glfw.WindowHandle))
+			core.inputs_update_gamepad()
 
 			app.update_cb(app)
 		}

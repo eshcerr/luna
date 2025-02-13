@@ -4,6 +4,8 @@ import "../base"
 import "../gfx"
 
 import "core:c"
+import "core:math"
+import "core:math/linalg"
 import "vendor:glfw"
 
 keycode_e :: enum {
@@ -243,6 +245,43 @@ glfw_mouse_buttons_lookup_table: map[c.int]mouse_buttons_e = {
 	glfw.MOUSE_BUTTON_8 = mouse_buttons_e.MOUSE_BUTTON_8,
 }
 
+gamepad_buttons_e :: enum {
+	GAMEPAD_BUTTON_A,
+	GAMEPAD_BUTTON_B,
+	GAMEPAD_BUTTON_X,
+	GAMEPAD_BUTTON_Y,
+	GAMEPAD_BUTTON_DPAD_LEFT,
+	GAMEPAD_BUTTON_DPAD_RIGHT,
+	GAMEPAD_BUTTON_DPAD_UP,
+	GAMEPAD_BUTTON_DPAD_DOWN,
+	GAMEPAD_BUTTON_LEFT_TRIGGER,
+	GAMEPAD_BUTTON_RIGHT_TRIGGER,
+	GAMEPAD_BUTTON_LEFT_BUMPER,
+	GAMEPAD_BUTTON_RIGHT_BUMPER,
+	GAMEPAD_BUTTON_BACK,
+	GAMEPAD_BUTTON_START,
+	GAMEPAD_BUTTON_GUIDE,
+	COUNT,
+}
+
+glfw_gamepad_buttons_lookup_table: map[c.int]gamepad_buttons_e = {
+	glfw.GAMEPAD_BUTTON_A            = gamepad_buttons_e.GAMEPAD_BUTTON_A,
+	glfw.GAMEPAD_BUTTON_B            = gamepad_buttons_e.GAMEPAD_BUTTON_B,
+	glfw.GAMEPAD_BUTTON_X            = gamepad_buttons_e.GAMEPAD_BUTTON_X,
+	glfw.GAMEPAD_BUTTON_Y            = gamepad_buttons_e.GAMEPAD_BUTTON_Y,
+	glfw.GAMEPAD_BUTTON_DPAD_LEFT    = gamepad_buttons_e.GAMEPAD_BUTTON_DPAD_LEFT,
+	glfw.GAMEPAD_BUTTON_DPAD_RIGHT   = gamepad_buttons_e.GAMEPAD_BUTTON_DPAD_RIGHT,
+	glfw.GAMEPAD_BUTTON_DPAD_UP      = gamepad_buttons_e.GAMEPAD_BUTTON_DPAD_UP,
+	glfw.GAMEPAD_BUTTON_DPAD_DOWN    = gamepad_buttons_e.GAMEPAD_BUTTON_DPAD_DOWN,
+	glfw.GAMEPAD_BUTTON_LEFT_THUMB   = gamepad_buttons_e.GAMEPAD_BUTTON_LEFT_TRIGGER,
+	glfw.GAMEPAD_BUTTON_RIGHT_THUMB  = gamepad_buttons_e.GAMEPAD_BUTTON_RIGHT_TRIGGER,
+	glfw.GAMEPAD_BUTTON_LEFT_BUMPER  = gamepad_buttons_e.GAMEPAD_BUTTON_LEFT_BUMPER,
+	glfw.GAMEPAD_BUTTON_RIGHT_BUMPER = gamepad_buttons_e.GAMEPAD_BUTTON_RIGHT_BUMPER,
+	glfw.GAMEPAD_BUTTON_BACK         = gamepad_buttons_e.GAMEPAD_BUTTON_BACK,
+	glfw.GAMEPAD_BUTTON_START        = gamepad_buttons_e.GAMEPAD_BUTTON_START,
+	glfw.GAMEPAD_BUTTON_GUIDE        = gamepad_buttons_e.GAMEPAD_BUTTON_GUIDE,
+}
+
 button_t :: struct {
 	is_down, just_pressed, just_released: bool,
 	half_transition_count:                u8,
@@ -259,7 +298,11 @@ mouse_t :: struct {
 	buttons:                               [mouse_buttons_e.COUNT]button_t,
 }
 
-gamepad_t :: struct {}
+gamepad_t :: struct {
+	left_stick, right_stick, dpad: base.vec2,
+	left_trigger, right_trigger:   f32,
+	buttons:                       [gamepad_buttons_e.COUNT]button_t,
+}
 
 input_t :: struct {
 	screen_size: base.ivec2,
@@ -282,6 +325,12 @@ inputs_update :: proc() {
 		button.just_released = false
 		button.half_transition_count = 0
 	}
+
+	for &button in input.gamepad.buttons {
+		button.just_pressed = false
+		button.just_released = false
+		button.half_transition_count = 0
+	}
 }
 
 inputs_update_mouse :: proc(window: glfw.WindowHandle) {
@@ -296,6 +345,53 @@ inputs_update_mouse :: proc(window: glfw.WindowHandle) {
 	)
 
 	input.mouse.delta = input.mouse.prev_mouse_pos - input.mouse.mouse_pos
+}
+
+GAMEPAD_AXIS_DEADZONE :: 0.1
+
+inputs_update_gamepad :: proc() {
+	if glfw.JoystickPresent(0) && glfw.JoystickIsGamepad(0) {
+		state: glfw.GamepadState
+		if glfw.GetGamepadState(0, &state) != 0 {
+			for i in 0..=glfw.GAMEPAD_BUTTON_LAST {
+				is_down: bool =
+					(state.buttons[i32(i)] == glfw.PRESS || state.buttons[i32(i)] == glfw.REPEAT)
+				button_code := glfw_gamepad_buttons_lookup_table[i32(i)]
+				p_button := &input.gamepad.buttons[button_code]
+
+				p_button.just_pressed = !p_button.just_pressed && !p_button.is_down && is_down
+				p_button.just_released = !p_button.just_released && p_button.is_down && !is_down
+				p_button.is_down = is_down
+				p_button.half_transition_count += 1
+			}
+
+			input.gamepad.dpad = base.vec2 {
+				(input.gamepad.buttons[gamepad_buttons_e.GAMEPAD_BUTTON_DPAD_LEFT].is_down ? -1 : 0) +
+				(input.gamepad.buttons[gamepad_buttons_e.GAMEPAD_BUTTON_DPAD_RIGHT].is_down ? 1 : 0),
+				(input.gamepad.buttons[gamepad_buttons_e.GAMEPAD_BUTTON_DPAD_UP].is_down ? -1 : 0) +
+				(input.gamepad.buttons[gamepad_buttons_e.GAMEPAD_BUTTON_DPAD_DOWN].is_down ? 1 : 0),
+			}
+			input.gamepad.dpad = linalg.vector_normalize(input.gamepad.dpad)
+
+			apply_deadzone::proc(v:f32) -> f32 {
+				if math.abs(v) < GAMEPAD_AXIS_DEADZONE {return 0.0}
+				return (v - (GAMEPAD_AXIS_DEADZONE * (v > 0 ? 1 : -1))) / (1.0 - GAMEPAD_AXIS_DEADZONE)
+			}
+
+			input.gamepad.left_stick = base.vec2 {
+				apply_deadzone(state.axes[glfw.GAMEPAD_AXIS_LEFT_X]),
+				apply_deadzone(state.axes[glfw.GAMEPAD_AXIS_LEFT_Y]),
+			}
+
+			input.gamepad.right_stick = base.vec2 {
+				apply_deadzone(state.axes[glfw.GAMEPAD_AXIS_RIGHT_X]),
+				apply_deadzone(state.axes[glfw.GAMEPAD_AXIS_RIGHT_Y]),
+			}
+
+			input.gamepad.left_trigger = state.axes[glfw.GAMEPAD_AXIS_LEFT_TRIGGER]
+			input.gamepad.right_trigger = state.axes[glfw.GAMEPAD_AXIS_RIGHT_TRIGGER]
+		}
+	}
 }
 
 inputs_key_pressed :: proc(keycode: keycode_e) -> bool {
@@ -324,6 +420,20 @@ inputs_mouse_button_released :: proc(mouse_button: mouse_buttons_e) -> bool {
 
 inputs_mouse_button_down :: proc(mouse_button: mouse_buttons_e) -> bool {
 	return input.mouse.buttons[mouse_button].is_down
+}
+
+inputs_gamepad_button_pressed :: proc(gamepad_button: gamepad_buttons_e) -> bool {
+	button := input.gamepad.buttons[gamepad_button]
+	return button.is_down && button.half_transition_count == 1 || button.half_transition_count > 1
+}
+
+inputs_gamepad_button_released :: proc(gamepad_button: gamepad_buttons_e) -> bool {
+	button := input.gamepad.buttons[gamepad_button]
+	return !button.is_down && button.half_transition_count == 1 || button.half_transition_count > 1
+}
+
+inputs_gamepad_button_down :: proc(gamepad_button: gamepad_buttons_e) -> bool {
+	return input.gamepad.buttons[gamepad_button].is_down
 }
 
 inputs_listen_to_glfw_keys :: proc "c" (

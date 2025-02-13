@@ -61,9 +61,6 @@ shader: gfx.shader_t
 setup :: proc(app: ^app_t) {}
 
 init :: proc(app: ^app_t) {
-	test_shader := gfx.shader_init(assets.get_path(.SHADER, "test_no_tokens.glsl"))
-	defer gfx.shader_deinit(&test_shader)
-
 	renderer = gfx.renderer_init()
 	gfx.renderer_update_camera(&renderer, &gfx.pip.game_camera)
 	shader = gfx.shader_init(assets.get_path(.SHADER, "test_no_tokens.glsl"))
@@ -96,6 +93,9 @@ update :: proc(app: ^app_t) {
 	if core.inputs_key_down(.KEY_A) {pos.x -= 100.0 * app.fixed_delta_time}
 	if core.inputs_key_down(.KEY_S) {pos.y += 100.0 * app.fixed_delta_time}
 	if core.inputs_key_down(.KEY_W) {pos.y -= 100.0 * app.fixed_delta_time}
+
+	base.log_info(core.inputs_gamepad_button_down(.GAMEPAD_BUTTON_A))
+	pos += 100.0 * core.input.gamepad.left_stick * app.fixed_delta_time
 
 	//gfx.animation_update(&car_anim, app.fixed_delta_time)
 	gfx.renderer_update_camera(&renderer, &gfx.pip.game_camera)
