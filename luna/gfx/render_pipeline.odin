@@ -50,10 +50,7 @@ render_pipeline_setup :: proc() {
 	glfw.WindowHint(glfw.CLIENT_API, glfw.OPENGL_API)
 	glfw.WindowHint(glfw.DOUBLEBUFFER, true)
 
-	if glfw.Init() != true {
-		base.log_err("failed to init glfw")
-		return
-	}
+	assert(bool(glfw.Init()), "failed to init glfw")
 }
 
 render_pipeline_init :: proc(window_title: string) {
@@ -66,10 +63,7 @@ render_pipeline_init :: proc(window_title: string) {
 	)
 	pip.window_handle = handle
 
-	if pip.window_handle == nil {
-		base.log_err("failed to create window")
-		return
-	}
+	assert(pip.window_handle != nil, "failed to create window")
 
 	glfw.MakeContextCurrent(pip.window_handle.(glfw.WindowHandle))
 	glfw.SwapInterval(0)
