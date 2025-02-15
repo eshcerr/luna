@@ -154,11 +154,13 @@ shader_init_and_generate :: proc(file_path: string, shader_type: shader_type_e) 
 		gl.Shader_Type.VERTEX_SHADER,
 	)
 	assert(vertex_compile_ok, "failed to compile vertex shader sources")
+	
 	fragment, fragment_compile_ok := gl.compile_shader_from_source(
 		fragment_source,
 		gl.Shader_Type.FRAGMENT_SHADER,
 	)
 	assert(fragment_compile_ok, "failed to compile vertex shader sources")
+
 	program, program_link_ok := gl.create_and_link_program({vertex, fragment})
 	assert(program_link_ok, "failed to link shader program")
 
