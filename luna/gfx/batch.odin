@@ -121,7 +121,8 @@ batch_add_item :: proc(batch: ^batch_t, item: batch_item_t) {
 batch_add_from_atlas :: proc(
 	batch: ^batch_t,
 	atlas_item: u32,
-	position, scale: base.vec2,
+	position: base.vec2,
+	scale: base.vec2 = {1, 1},
 	rotation: f32 = 0.0,
 	material: ^material_t = nil,
 	options: rendering_options_e = .NONE,
@@ -146,7 +147,8 @@ batch_add_from_atlas :: proc(
 batch_add_from_animation :: proc(
 	batch: ^batch_t,
 	animation: ^animation_t,
-	position, scale: base.vec2,
+	position: base.vec2,
+	scale: base.vec2 = {1, 1},
 	rotation: f32 = 0.0,
 	material: ^material_t = nil,
 	options: rendering_options_e = .NONE,
@@ -167,7 +169,8 @@ batch_add_text :: proc(
 	batch: ^batch_t,
 	text: string,
 	font: ^font_t,
-	position, scale: base.vec2,
+	position: base.vec2,
+	scale: base.vec2 = {1, 1},
 	rotation: f32 = 0.0,
 	material: ^material_t = nil,
 	options: rendering_options_e = .NONE,
@@ -177,7 +180,7 @@ batch_add_text :: proc(
 	local_position := position
 	for character in text {
 		if character == '\n' {
-			local_position.x = position.x * scale.x
+			local_position.x = position.x - font_get_glyph_offset(font, ' ').x * scale.x
 			local_position.y += f32(font.font_height) * scale.y
 			continue
 		}
@@ -200,6 +203,5 @@ batch_add_text :: proc(
 		)
 
 		local_position.x += f32(char_rect.z + 1) * scale.x
-
 	}
 }

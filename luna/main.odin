@@ -84,6 +84,10 @@ init :: proc(app: ^app_t) {
 		gfx.shader_type_e.FONT,
 	)
 
+	car_mat = {
+		color = base.COLOR_WHITE
+	}
+
 
 	font = gfx.font_bake(
 		assets.get_path(.FONT, "essential.ttf"),
@@ -152,10 +156,12 @@ draw :: proc(app: ^app_t, interpolated_delta_time: f32) {
 	gfx.batch_begin(&font_batch)
 	gfx.batch_add(
 		&font_batch,
-		"YEEEEET !!\nthis is a mother fucking text !",
+		"yeeeet !!\nthis is a mother fucking text !",
 		&font,
 		base.vec2{10, 100},
-		base.vec2{2, 2},
+		base.vec2{1, 1},
+		0,
+		&car_mat
 	)
 
 	gfx.renderer_draw_batch(&renderer, &font_batch)
