@@ -136,21 +136,11 @@ update :: proc(app: ^app_t) {
 }
 
 draw :: proc(app: ^app_t, interpolated_delta_time: f32) {
-	gfx.renderer_use_shader(&renderer, &shader)
-
+	
+	
 	gfx.renderer_begin()
-
-	gfx.batch_begin(&sprite_batch)
-	gfx.batch_add(
-		&sprite_batch,
-		0,
-		math.lerp(prev_pos, pos, interpolated_delta_time),
-		base.vec2{2, 2},
-		app.time,
-		nil,
-	)
-
-	gfx.renderer_draw_batch(&renderer, &sprite_batch)
+	
+	
 
 	gfx.renderer_use_shader(&renderer, &font_shader)
 	gfx.batch_begin(&font_batch)
@@ -165,4 +155,17 @@ draw :: proc(app: ^app_t, interpolated_delta_time: f32) {
 	)
 
 	gfx.renderer_draw_batch(&renderer, &font_batch)
+
+	gfx.renderer_use_shader(&renderer, &shader)
+	gfx.batch_begin(&sprite_batch)
+	gfx.batch_add(
+		&sprite_batch,
+		0,
+		math.lerp(prev_pos, pos, interpolated_delta_time),
+		base.vec2{2, 2},
+		app.time,
+		nil,
+	)
+
+	gfx.renderer_draw_batch(&renderer, &sprite_batch)
 }

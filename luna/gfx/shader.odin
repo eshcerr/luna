@@ -113,15 +113,18 @@ void main()
     vec4 tex_color = texelFetch(texture_atlas, ivec2(uv), 0);
 `
 
+
 GLSL_SPRITE_FRAGMENT_SHADER :: `
     if (tex_color.a == 0.0) { discard; }
     frag_color = tex_color * material.color;
 `
 
+
 GLSL_FONT_FRAGMENT_SHADER :: `
     if (tex_color.r == 0.0) { discard; }
     frag_color = tex_color.r * material.color;
 `
+
 
 shader_t :: struct {
 	program: u32,
@@ -165,72 +168,98 @@ shader_init_and_generate :: proc(file_path: string, shader_type: shader_type_e) 
 	return {program = program}
 }
 
-shader_generate_sources :: proc(shader_path: string, shader_type: shader_type_e) -> (string, string) {
+shader_generate_sources :: proc(
+	shader_path: string,
+	shader_type: shader_type_e,
+) -> (
+	string,
+	string,
+) {
 	shader_token_e :: enum {
+		VERTEX_VARIABLES_BEGIN,
+		VERTEX_VARIABLES_END,
+		VERTEX_VARIABLES_NO,
 		VERTEX_BEGIN,
 		VERTEX_END,
 		VERTEX_NO,
+		FRAGMENT_VARIABLES_BEGIN,
+		FRAGMENT_VARIABLES_END,
+		FRAGMENT_VARIABLES_NO,
 		FRAGMENT_BEGIN,
 		FRAGMENT_END,
 		FRAGMENT_NO,
 	}
 
 	@(static) SHADER_TOKENS := [shader_token_e]string {
-		.VERTEX_BEGIN   = "@vert", // start a vertex shader code block
-		.VERTEX_END     = "@endvert", // end a vertex shader block code
-		.VERTEX_NO      = "@novert", // specify that there will be no vertex shader code
-		.FRAGMENT_BEGIN = "@frag", // start a fragment shader code block
-		.FRAGMENT_END   = "@endfrag", // end a fragment shader block code
-		.FRAGMENT_NO    = "@nofrag", // specify that there will be no fragment shader code
+		.VERTEX_VARIABLES_BEGIN   = "@vert_variables",
+		.VERTEX_VARIABLES_END     = "@end_vert_variables",
+		.VERTEX_VARIABLES_NO      = "@no_vert_variables",
+		.VERTEX_BEGIN             = "@vert", // start a vertex shader code block
+		.VERTEX_END               = "@end_vert", // end a vertex shader block code
+		.VERTEX_NO                = "@no_vert", // specify that there will be no vertex shader code
+		.FRAGMENT_VARIABLES_BEGIN = "@frag_variables",
+		.FRAGMENT_VARIABLES_END   = "@end_frag_variables",
+		.FRAGMENT_VARIABLES_NO    = "@no_frag_variables",
+		.FRAGMENT_BEGIN           = "@frag", // start a fragment shader code block
+		.FRAGMENT_END             = "@end_frag", // end a fragment shader block code
+		.FRAGMENT_NO              = "@no_frag", // specify that there will be no fragment shader code
+	}
+
+	check_tokens :: proc(source: string, begin, end, no: shader_token_e) -> (has_source: bool) {
+		has_no_source := strings.contains(source, SHADER_TOKENS[no])
+		has_source =
+			strings.contains(source, SHADER_TOKENS[begin]) ||
+			strings.contains(source, SHADER_TOKENS[end])
+
+		assert(
+			!(has_no_source && has_source),
+			strings.concatenate(
+				{
+					"cannot use both ",
+					SHADER_TOKENS[begin],
+					"/",
+					SHADER_TOKENS[end],
+					" and ",
+					SHADER_TOKENS[no],
+					" in the same file.",
+				},
+			),
+		)
+		return
 	}
 
 	file_source, is_ok := os.read_entire_file_from_filename(shader_path)
 	assert(is_ok, strings.concatenate({"failed to read file content of: ", shader_path}))
 	source := strings.trim_space(string(file_source))
 
-	has_novert := strings.contains(source, SHADER_TOKENS[.VERTEX_NO])
-	has_vert_token :=
-		strings.contains(source, SHADER_TOKENS[.VERTEX_BEGIN]) ||
-		strings.contains(source, SHADER_TOKENS[.VERTEX_END])
-
-	assert(
-		!(has_novert && has_vert_token),
-		strings.concatenate(
-			{
-				"cannot use both ",
-				SHADER_TOKENS[.VERTEX_BEGIN],
-				"/",
-				SHADER_TOKENS[.VERTEX_END],
-				" and ",
-				SHADER_TOKENS[.VERTEX_NO],
-				" in the same file.",
-			},
-		),
+	has_vertex_variables_token := check_tokens(
+		source,
+		.VERTEX_VARIABLES_BEGIN,
+		.VERTEX_VARIABLES_END,
+		.VERTEX_VARIABLES_NO,
 	)
-
-	has_nofrag := strings.contains(source, SHADER_TOKENS[.FRAGMENT_NO])
-	has_frag_token :=
-		strings.contains(source, SHADER_TOKENS[.FRAGMENT_BEGIN]) ||
-		strings.contains(source, SHADER_TOKENS[.FRAGMENT_END])
-
-	assert(
-		!(has_nofrag && has_frag_token),
-		strings.concatenate(
-			{
-				"cannot use both ",
-				SHADER_TOKENS[.FRAGMENT_BEGIN],
-				"/",
-				SHADER_TOKENS[.FRAGMENT_END],
-				" and ",
-				SHADER_TOKENS[.FRAGMENT_NO],
-				" in the same file.",
-			},
-		),
+	has_vertex_token := check_tokens(source, .VERTEX_BEGIN, .VERTEX_END, .VERTEX_NO)
+	has_fragment_variables_token := check_tokens(
+		source,
+		.FRAGMENT_VARIABLES_BEGIN,
+		.FRAGMENT_VARIABLES_END,
+		.FRAGMENT_VARIABLES_NO,
 	)
+	has_fragment_token := check_tokens(source, .FRAGMENT_BEGIN, .FRAGMENT_END, .FRAGMENT_NO)
 
+
+	vertex_variables_source, fragment_variables_source: string = "", ""
 	vertex_source, fragment_source: string = "", ""
 
-	if has_vert_token {
+	if has_vertex_variables_token {
+		vertex_variables_source = shader_extract_code(
+			source,
+			SHADER_TOKENS[.VERTEX_BEGIN],
+			SHADER_TOKENS[.VERTEX_END],
+		)
+	}
+
+	if has_vertex_token {
 		vertex_source = shader_extract_code(
 			source,
 			SHADER_TOKENS[.VERTEX_BEGIN],
@@ -238,7 +267,15 @@ shader_generate_sources :: proc(shader_path: string, shader_type: shader_type_e)
 		)
 	}
 
-	if has_frag_token {
+	if has_fragment_variables_token {
+		fragment_variables_source = shader_extract_code(
+			source,
+			SHADER_TOKENS[.FRAGMENT_BEGIN],
+			SHADER_TOKENS[.FRAGMENT_END],
+		)
+	}
+
+	if has_fragment_token {
 		fragment_source = shader_extract_code(
 			source,
 			SHADER_TOKENS[.FRAGMENT_BEGIN],
@@ -249,13 +286,14 @@ shader_generate_sources :: proc(shader_path: string, shader_type: shader_type_e)
 	final_vertex_source, final_fragment_source: string
 
 	final_vertex_source = strings.concatenate(
-		{GLSL_VERSION, GLSL_VERTEX_SHADER, vertex_source, "\n}"},
+		{GLSL_VERSION, vertex_variables_source, GLSL_VERTEX_SHADER, vertex_source, "\n}"},
 	)
 
 	if shader_type == .SPRITE {
 		final_fragment_source = strings.concatenate(
 			{
 				GLSL_VERSION,
+				fragment_variables_source,
 				GLSL_FRAGMENT_SHADER,
 				GLSL_SPRITE_FRAGMENT_SHADER,
 				fragment_source,
@@ -266,6 +304,7 @@ shader_generate_sources :: proc(shader_path: string, shader_type: shader_type_e)
 		final_fragment_source = strings.concatenate(
 			{
 				GLSL_VERSION,
+				fragment_variables_source,
 				GLSL_FRAGMENT_SHADER,
 				GLSL_FONT_FRAGMENT_SHADER,
 				fragment_source,
