@@ -51,6 +51,8 @@ main :: proc() {
 	)
 }
 
+audio: ^sfx.audio_t
+metal_pipe_sound: ^sfx.sound_t
 
 renderer: ^gfx.renderer_t
 sprite_batch: ^gfx.batch_t
@@ -71,6 +73,10 @@ car_mat: gfx.material_t
 setup :: proc(app: ^app_t) {}
 
 init :: proc(app: ^app_t) {
+	audio = sfx.audio_init()
+	metal_pipe_sound = sfx.sound_load(assets.get_path(.SFX, "metal_pipe.wav"), audio)
+
+
 	renderer = gfx.renderer_init()
 	gfx.renderer_update_camera(renderer, &gfx.pip.game_camera)
 	shader = gfx.shader_init(
@@ -78,14 +84,14 @@ init :: proc(app: ^app_t) {
 		gfx.shader_type_e.SPRITE,
 	)
 
-	
+
 	font_shader = gfx.shader_init(
 		assets.get_path(.SHADER, "test_no_tokens.glsl"),
 		gfx.shader_type_e.FONT,
 	)
 
 	car_mat = {
-		color = base.COLOR_WHITE
+		color = base.COLOR_WHITE,
 	}
 
 
@@ -110,6 +116,8 @@ init :: proc(app: ^app_t) {
 }
 
 deinit :: proc(app: ^app_t) {
+	sfx.sound_deinit(metal_pipe_sound, audio)
+	sfx.audio_deinit(audio)
 	gfx.renderer_deinit(renderer)
 	gfx.batch_deinit(sprite_batch)
 	gfx.batch_deinit(font_batch)
@@ -130,6 +138,10 @@ update :: proc(app: ^app_t) {
 	if core.inputs_key_down(.KEY_S) {pos.y += 100.0 * app.fixed_delta_time}
 	if core.inputs_key_down(.KEY_W) {pos.y -= 100.0 * app.fixed_delta_time}
 
+	if core.inputs_key_pressed(.KEY_P) {
+		sfx.sound_play(metal_pipe_sound)
+	}
+
 	pos += 100.0 * core.input.gamepad.left_stick * app.fixed_delta_time
 
 	gfx.renderer_update_camera(renderer, &gfx.pip.game_camera)
@@ -147,7 +159,7 @@ draw :: proc(app: ^app_t, interpolated_delta_time: f32) {
 		base.vec2{10, 100},
 		base.vec2{1, 1},
 		0,
-		&car_mat
+		&car_mat,
 	)
 
 	gfx.renderer_draw_batch(renderer, font_batch)
