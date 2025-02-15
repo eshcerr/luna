@@ -25,9 +25,9 @@ font_bake :: proc(
 	path, png_output_path: string,
 	font_size: i32,
 	font_atlas_size: base.ivec2,
-) -> font_t {
+) -> ^font_t {
 
-	font: font_t
+	font := new(font_t)
 	font.font_height = font_size
 
 	content, err := os.read_entire_file(path)
@@ -81,6 +81,10 @@ font_bake :: proc(
 	return font
 }
 
+font_deinit :: proc(font: ^font_t) {
+	free(font)
+}
+
 font_get_glyph_rect :: proc(font: ^font_t, character: rune) -> base.iaabb {
 	glyph_index := character - FONT_CHARACTER_BEGIN
 	char: stbtt.packedchar = font.glyphs[i32(glyph_index)]
@@ -96,4 +100,4 @@ font_get_glyph_offset :: proc(font: ^font_t, character: rune) -> base.vec2 {
 	glyph_index := character - FONT_CHARACTER_BEGIN
 	char: stbtt.packedchar = font.glyphs[i32(glyph_index)]
 	return {char.xoff, char.yoff}
-} 
+}

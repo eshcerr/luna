@@ -16,12 +16,15 @@ atlas_t :: struct {
 	rects:  map[u32]base.iaabb,
 }
 
-atlas_init :: proc(sprite: ^sprite_t, sub_sprites: map[u32]base.iaabb) -> atlas_t {
-	return {sprite, sub_sprites}
+atlas_init :: proc(sprite: ^sprite_t, sub_sprites: map[u32]base.iaabb) -> ^atlas_t {
+	atlas:= new(atlas_t)
+	atlas.sprite = sprite
+	atlas.rects = sub_sprites
+	return atlas
 }
 
-atlas_init_from_font :: proc(sprite: ^sprite_t, font: ^font_t, space_width: i32) -> atlas_t {
-	atlas: atlas_t
+atlas_init_from_font :: proc(sprite: ^sprite_t, font: ^font_t, space_width: i32) -> ^atlas_t {
+	atlas:= new(atlas_t)
 	atlas.sprite = sprite
 
 	for i in 0 ..< (FONT_CHARACTER_END - FONT_CHARACTER_BEGIN) {
@@ -35,11 +38,11 @@ atlas_init_from_font :: proc(sprite: ^sprite_t, font: ^font_t, space_width: i32)
 
 atlas_deinit :: proc(atlas: ^atlas_t) {
 	clear_map(&atlas.rects)
-	atlas.sprite = nil
+	free(atlas)
 }
 
-sprite_from_png :: proc(path: string) -> sprite_t {
-	sprite := sprite_t{}
+sprite_from_png :: proc(path: string) -> ^sprite_t {
+	sprite := new(sprite_t)
 
 	sprite.path = path
 	sprite.data = stbi.load(
@@ -54,11 +57,12 @@ sprite_from_png :: proc(path: string) -> sprite_t {
 }
 
 @(deprecated = "not implemented yet")
-sprite_from_ase :: proc(path: string) -> sprite_t {
-	sprite := sprite_t{}
+sprite_from_ase :: proc(path: string) -> ^sprite_t {
+	sprite := new(sprite_t)
 	return sprite
 }
 
 sprite_deinit :: proc(sprite: ^sprite_t) {
 	stbi.image_free(sprite.data)
+	free(sprite)
 }

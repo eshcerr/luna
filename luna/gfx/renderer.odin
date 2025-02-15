@@ -6,12 +6,12 @@ import "core:strings"
 import gl "vendor:OpenGL"
 
 renderer_t :: struct {
-	vao, transform_sbo, material_sbo:         u32,
-	game_camera_proj: base.mat4,
+	vao, transform_sbo, material_sbo: u32,
+	game_camera_proj:                 base.mat4,
 }
 
-renderer_init :: proc() -> renderer_t {
-	renderer := renderer_t{}
+renderer_init :: proc() -> ^renderer_t {
+	renderer := new(renderer_t)
 	gl.GenVertexArrays(1, &renderer.vao)
 	gl.BindVertexArray(renderer.vao)
 
@@ -44,6 +44,9 @@ renderer_init :: proc() -> renderer_t {
 
 renderer_deinit :: proc(renderer: ^renderer_t) {
 	gl.DeleteVertexArrays(1, &renderer.vao)
+	gl.DeleteBuffers(1, &renderer.transform_sbo)
+	gl.DeleteBuffers(1, &renderer.material_sbo)
+	free(renderer)
 }
 
 renderer_begin :: proc() {

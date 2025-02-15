@@ -35,8 +35,8 @@ rendering_options_e :: enum {
 	FLIP_Y = 0b010,
 }
 
-batch_init :: proc(atlas: ^atlas_t, batch_type: batch_type_e) -> batch_t {
-	batch: batch_t = {}
+batch_init :: proc(atlas: ^atlas_t, batch_type: batch_type_e) -> ^batch_t {
+	batch:= new(batch_t)
 	batch.atlas = atlas
 	batch.items = make_dynamic_array([dynamic]batch_item_t)
 	batch.materials = make_dynamic_array([dynamic]material_t)
@@ -82,6 +82,7 @@ batch_deinit :: proc(batch: ^batch_t) {
 	clear_dynamic_array(&batch.materials)
 	delete_dynamic_array(batch.materials)
 	gl.DeleteTextures(1, &batch.texture_id)
+	free(batch)
 }
 
 batch_begin :: proc(batch: ^batch_t) {

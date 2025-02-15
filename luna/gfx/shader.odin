@@ -140,13 +140,17 @@ shader_init :: proc {
 	shader_init_and_generate,
 }
 
-shader_init_from_files :: proc(vert_path, frag_path: string) -> shader_t {
+shader_init_from_files :: proc(vert_path, frag_path: string) -> ^shader_t {
 	program, is_ok := gl.load_shaders_file(vert_path, frag_path)
 	assert(is_ok, "shader loading failed")
-	return {program = program}
+
+	shader := new(shader_t)
+	shader.program = program
+
+	return shader
 }
 
-shader_init_and_generate :: proc(file_path: string, shader_type: shader_type_e) -> shader_t {
+shader_init_and_generate :: proc(file_path: string, shader_type: shader_type_e) -> ^shader_t {
 	vertex_source, fragment_source := shader_generate_sources(file_path, shader_type)
 
 	vertex, vertex_compile_ok := gl.compile_shader_from_source(
@@ -154,7 +158,7 @@ shader_init_and_generate :: proc(file_path: string, shader_type: shader_type_e) 
 		gl.Shader_Type.VERTEX_SHADER,
 	)
 	assert(vertex_compile_ok, "failed to compile vertex shader sources")
-	
+
 	fragment, fragment_compile_ok := gl.compile_shader_from_source(
 		fragment_source,
 		gl.Shader_Type.FRAGMENT_SHADER,
@@ -167,7 +171,15 @@ shader_init_and_generate :: proc(file_path: string, shader_type: shader_type_e) 
 	gl.DeleteShader(vertex)
 	gl.DeleteShader(fragment)
 
-	return {program = program}
+	shader := new(shader_t)
+	shader.program = program
+
+	return shader
+}
+
+shader_deinit :: proc(shader: ^shader_t) {
+	gl.DeleteProgram(shader.program)
+	free(shader)
 }
 
 shader_generate_sources :: proc(
@@ -327,10 +339,6 @@ shader_extract_code :: proc(source, begin_token, end_token: string) -> string {
 	assert(start_index != -1, strings.concatenate({end_token, " not found"}))
 
 	return strings.trim_space(source[start_index:start_index + end_index])
-}
-
-shader_deinit :: proc(shader: ^shader_t) {
-	gl.DeleteProgram(shader.program)
 }
 
 shader_set_vec2 :: proc(shader: ^shader_t, name: string, v: base.vec2) {

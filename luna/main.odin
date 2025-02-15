@@ -52,27 +52,27 @@ main :: proc() {
 }
 
 
-renderer: gfx.renderer_t
-sprite_batch: gfx.batch_t
+renderer: ^gfx.renderer_t
+sprite_batch: ^gfx.batch_t
 
-font_batch: gfx.batch_t
-font: gfx.font_t
+font_batch: ^gfx.batch_t
+font: ^gfx.font_t
 
-car_sprite: gfx.sprite_t
-car_atlas: gfx.atlas_t
+car_sprite: ^gfx.sprite_t
+car_atlas: ^gfx.atlas_t
 
-font_sprite: gfx.sprite_t
-font_atlas: gfx.atlas_t
+font_sprite: ^gfx.sprite_t
+font_atlas: ^gfx.atlas_t
 
-shader: gfx.shader_t
-font_shader: gfx.shader_t
+shader: ^gfx.shader_t
+font_shader: ^gfx.shader_t
 car_mat: gfx.material_t
 
 setup :: proc(app: ^app_t) {}
 
 init :: proc(app: ^app_t) {
 	renderer = gfx.renderer_init()
-	gfx.renderer_update_camera(&renderer, &gfx.pip.game_camera)
+	gfx.renderer_update_camera(renderer, &gfx.pip.game_camera)
 	shader = gfx.shader_init(
 		assets.get_path(.SHADER, "test_no_tokens.glsl"),
 		gfx.shader_type_e.SPRITE,
@@ -97,28 +97,28 @@ init :: proc(app: ^app_t) {
 	)
 
 	font_sprite = gfx.sprite_from_png(assets.get_path(.BAKED_FONT, "essential.png"))
-	font_atlas = gfx.atlas_init_from_font(&font_sprite, &font, 4)
+	font_atlas = gfx.atlas_init_from_font(font_sprite, font, 4)
 
 	car_sprite = gfx.sprite_from_png(assets.get_path(.IMAGE, "test.png"))
 	car_atlas = gfx.atlas_init(
-		&car_sprite,
+		car_sprite,
 		{0 = base.iaabb{0, 0, car_sprite.width, car_sprite.height}},
 	)
 
-	sprite_batch = gfx.batch_init(&car_atlas, .SPRITE)
-	font_batch = gfx.batch_init(&font_atlas, .FONT)
+	sprite_batch = gfx.batch_init(car_atlas, .SPRITE)
+	font_batch = gfx.batch_init(font_atlas, .FONT)
 }
 
 deinit :: proc(app: ^app_t) {
-	gfx.renderer_deinit(&renderer)
-	gfx.batch_deinit(&sprite_batch)
-	gfx.batch_deinit(&font_batch)
+	gfx.renderer_deinit(renderer)
+	gfx.batch_deinit(sprite_batch)
+	gfx.batch_deinit(font_batch)
 
-	gfx.shader_deinit(&shader)
-	gfx.shader_deinit(&font_shader)
+	gfx.shader_deinit(shader)
+	gfx.shader_deinit(font_shader)
 
-	gfx.atlas_deinit(&car_atlas)
-	gfx.sprite_deinit(&car_sprite)
+	gfx.atlas_deinit(car_atlas)
+	gfx.sprite_deinit(car_sprite)
 }
 prev_pos, pos: base.vec2
 
@@ -132,34 +132,30 @@ update :: proc(app: ^app_t) {
 
 	pos += 100.0 * core.input.gamepad.left_stick * app.fixed_delta_time
 
-	gfx.renderer_update_camera(&renderer, &gfx.pip.game_camera)
+	gfx.renderer_update_camera(renderer, &gfx.pip.game_camera)
 }
 
 draw :: proc(app: ^app_t, interpolated_delta_time: f32) {
-	
-	
 	gfx.renderer_begin()
-	
-	
 
-	gfx.renderer_use_shader(&renderer, &font_shader)
-	gfx.batch_begin(&font_batch)
+	gfx.renderer_use_shader(renderer, font_shader)
+	gfx.batch_begin(font_batch)
 	gfx.batch_add(
-		&font_batch,
+		font_batch,
 		"yeeeet !!\nthis is a mother fucking text !",
-		&font,
+		font,
 		base.vec2{10, 100},
 		base.vec2{1, 1},
 		0,
 		&car_mat
 	)
 
-	gfx.renderer_draw_batch(&renderer, &font_batch)
+	gfx.renderer_draw_batch(renderer, font_batch)
 
-	gfx.renderer_use_shader(&renderer, &shader)
-	gfx.batch_begin(&sprite_batch)
+	gfx.renderer_use_shader(renderer, shader)
+	gfx.batch_begin(sprite_batch)
 	gfx.batch_add(
-		&sprite_batch,
+		sprite_batch,
 		0,
 		math.lerp(prev_pos, pos, interpolated_delta_time),
 		base.vec2{2, 2},
@@ -167,5 +163,5 @@ draw :: proc(app: ^app_t, interpolated_delta_time: f32) {
 		nil,
 	)
 
-	gfx.renderer_draw_batch(&renderer, &sprite_batch)
+	gfx.renderer_draw_batch(renderer, sprite_batch)
 }
