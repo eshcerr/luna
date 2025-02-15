@@ -70,7 +70,7 @@ renderer_use_shader :: proc(renderer: ^renderer_t, shader: ^shader_t) {
 }
 
 renderer_draw_batch :: proc(renderer: ^renderer_t, batch: ^batch_t) {
-	gl.BindTexture(gl.TEXTURE_2D, batch.tex_id)
+	gl.BindTexture(gl.TEXTURE_2D, batch.texture_id)
 	gl.ActiveTexture(gl.TEXTURE0) // only one texture at the time for now
 
 	gl.BindBufferBase(gl.SHADER_STORAGE_BUFFER, 0, renderer.transform_sbo)

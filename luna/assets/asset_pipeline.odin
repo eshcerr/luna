@@ -6,6 +6,7 @@ asset_type_e :: enum {
 	IMAGE,
 	SHADER,
 	FONT,
+	BAKED_FONT,
 	SFX,
 	DATA,
 	COUNT,

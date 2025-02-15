@@ -20,6 +20,19 @@ atlas_init :: proc(sprite: ^sprite_t, sub_sprites: map[u32]base.iaabb) -> atlas_
 	return {sprite, sub_sprites}
 }
 
+atlas_init_from_font :: proc(sprite: ^sprite_t, font: ^font_t, space_width: i32) -> atlas_t {
+	atlas: atlas_t
+	atlas.sprite = sprite
+
+	for i in 0 ..< (FONT_CHARACTER_END - FONT_CHARACTER_BEGIN) {
+		atlas.rects[u32(i)] = font_get_glyph_rect(font, rune(i + FONT_CHARACTER_BEGIN))
+	}
+
+	atlas.rects[0] = {atlas.rects[0].x, atlas.rects[0].y, space_width, atlas.rects[0].w}
+
+	return atlas
+}
+
 atlas_deinit :: proc(atlas: ^atlas_t) {
 	clear_map(&atlas.rects)
 	atlas.sprite = nil
