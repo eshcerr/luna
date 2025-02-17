@@ -53,7 +53,6 @@ main :: proc() {
 }
 
 audio: ^sfx.audio_t
-metal_pipe_sound: ^sfx.sound_t
 wiwiwi_sound: ^sfx.sound_t
 rat_dance_music: ^sfx.music_t
 
@@ -78,9 +77,8 @@ setup :: proc(app: ^app_t) {}
 init :: proc(app: ^app_t) {
 	audio = sfx.audio_init()
 	sfx.audio_set_volume(audio, .GENERAL, 0.1)
-	metal_pipe_sound = sfx.sound_load(assets.get_path(.SFX, "metal_pipe.wav"), audio)
-	wiwiwi_sound = sfx.sound_load(assets.get_path(.SFX, "wiwiwi.wav"), audio)
-	rat_dance_music = sfx.music_init(audio, assets.get_path(.SFX, "rat_dance_meme.wav"))
+	wiwiwi_sound = sfx.sound_init(assets.get_path(.SFX, "wiwiwi.wav"), audio)
+	rat_dance_music = sfx.music_init(assets.get_path(.SFX, "rat_dance_meme.wav"), .SINGLE, audio)
 
 	renderer = gfx.renderer_init()
 	gfx.renderer_update_camera(renderer, &gfx.pip.game_camera)
@@ -121,9 +119,6 @@ init :: proc(app: ^app_t) {
 }
 
 deinit :: proc(app: ^app_t) {
-	sfx.sound_deinit(metal_pipe_sound, audio)
-	sfx.sound_deinit(wiwiwi_sound, audio)
-	sfx.music_deinit(rat_dance_music, audio)
 	sfx.audio_deinit(audio)
 
 	gfx.renderer_deinit(renderer)
@@ -149,10 +144,16 @@ update :: proc(app: ^app_t) {
 		sfx.music_play(rat_dance_music)
 	}
 
+	if core.inputs_key_pressed(.KEY_N) {
+		sfx.music_stop(rat_dance_music)
+	}
+
+	if core.inputs_key_pressed(.KEY_B) {
+		sfx.music_reset(rat_dance_music)
+	}
 }
 
 fixed_update :: proc(app: ^app_t) {
-
 	prev_pos = pos
 
 	if core.inputs_key_down(.KEY_D) {pos.x += 100.0 * app.fixed_delta_time}

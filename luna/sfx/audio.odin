@@ -8,6 +8,9 @@ import "core:strings"
 import "shared:odin-al/al"
 import "shared:odin-al/alc"
 
+WAV_HEADER_END :: 44
+WAV_FREQUENCY :: 44100
+
 audio_t :: struct {
 	device:  alc.Device,
 	ctx:     alc.Context,
@@ -46,7 +49,7 @@ audio_deinit :: proc(audio: ^audio_t) {
 	clear_dynamic_array(&audio.sounds)
 
 	for music in audio.musics {
-		//music_deinit(music)
+		music_deinit(music, audio)
 	}
 	clear_dynamic_array(&audio.musics)
 
@@ -77,49 +80,18 @@ audio_set_volume :: proc(audio: ^audio_t, audio_volume_type: audio_volume_type_e
 
 audio_set_musics_volume :: proc(audio: ^audio_t, volume: f32) {
 	for music in audio.musics {
-		switch music.music_type {
-		case .STREAMING:
-			al.sourcef(
-				music.music.(^music_streaming_t).source,
-				al.GAIN,
-				audio.volumes[.GENERAL] * audio.volumes[.MUSIC],
-			)
+		al.sourcef(
+			music.source,
+			al.GAIN,
+			audio.volumes[.GENERAL] * audio.volumes[.MUSIC],
+		)
+	}
+}
 
-		case .LAYERED:
-			for layer in music.music.(^music_layered_t).layers {
-				al.sourcef(
-					layer.music.source,
-					al.GAIN,
-					audio.volumes[.GENERAL] * audio.volumes[.MUSIC] * layer.volume,
-				)
-			}
+audio_update_musics :: proc(audio: ^audio_t) {
+	for music in audio.musics {
+		if music.is_playing {
+			music_update(music)
 		}
 	}
-}
-
-audio_update_musics :: proc (audio: ^audio_t) {
-	for music in audio.musics {
-		music_update(music)
-	}
-}
-
-load_wav_file :: proc(filename: string, format: ^i32, data: ^[]u8, freq: ^i32) -> bool {
-	content, success := os.read_entire_file(filename)
-	assert(success, strings.concatenate({"failed to read WAV file: ", filename}))
-
-	switch content[22] {
-	case 1:
-		if content[34] == 16 {format^ = al.FORMAT_MONO16} else {format^ = al.FORMAT_MONO8}
-	case:
-		if content[34] == 16 {format^ = al.FORMAT_STEREO16} else {format^ = al.FORMAT_STEREO8}
-	}
-
-	freq^ = unpack_le_u32(content[24:28])
-	data^ = content[44:] // Skip WAV header
-
-	return true
-}
-
-unpack_le_u32 :: proc(bytes: []u8) -> i32 {
-	return i32(bytes[0]) | (i32(bytes[1]) << 8) | (i32(bytes[2]) << 16) | (i32(bytes[3]) << 24)
 }
