@@ -17,6 +17,7 @@ app_t :: struct {
 	init_cb:                                                proc(app: ^app_t),
 	event_cb:                                               proc(app: ^app_t),
 	update_cb:                                              proc(app: ^app_t),
+	fixed_update_cb:                                        proc(app: ^app_t),
 	draw_cb:                                                proc(
 		app: ^app_t,
 		interpolated_delta_time: f32,
@@ -56,7 +57,9 @@ app_run :: proc(
 		glfw.SwapBuffers(render_pip.window_handle.(glfw.WindowHandle))
 		app.time += app.delta_time
 		timer += app.delta_time
+		app.update_cb(app)
 		// fixed update loop
+		
 		for timer >= app.fixed_delta_time {
 			timer -= app.fixed_delta_time
 			// reset inputs values
@@ -65,7 +68,7 @@ app_run :: proc(
 			core.inputs_update_mouse(render_pip.window_handle.(glfw.WindowHandle))
 			core.inputs_update_gamepad()
 
-			app.update_cb(app)
+			app.fixed_update_cb(app)
 		}
 
 		interpolated_delta_time := timer / app.fixed_delta_time

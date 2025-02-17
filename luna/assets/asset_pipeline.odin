@@ -1,6 +1,11 @@
 package luna_assets
 
 import "core:strings"
+import "core:encoding/json" 
+// TODO : json serialisation and deserialisation
+// TODO : json animation save load
+
+// TODO : ressource management pipeline
 
 asset_type_e :: enum {
 	IMAGE,

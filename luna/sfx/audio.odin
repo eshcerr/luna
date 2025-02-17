@@ -39,8 +39,17 @@ audio_init :: proc() -> ^audio_t {
 audio_deinit :: proc(audio: ^audio_t) {
 	alc.destroy_context(audio.ctx)
 	alc.close_device(audio.device)
+
+	for sound in audio.sounds {
+		sound_deinit(sound, audio)
+	}
 	clear_dynamic_array(&audio.sounds)
+
+	for music in audio.musics {
+		//music_deinit(music)
+	}
 	clear_dynamic_array(&audio.musics)
+
 	free(audio)
 }
 
@@ -53,19 +62,44 @@ audio_set_volume :: proc(audio: ^audio_t, audio_volume_type: audio_volume_type_e
 			al.sourcef(sound.source, al.GAIN, audio.volumes[.GENERAL] * audio.volumes[.SOUND])
 		}
 	case .MUSIC:
-		for music in audio.musics {
-			al.sourcef(music.source, al.GAIN, audio.volumes[.GENERAL] * audio.volumes[.MUSIC])
-		}
+		audio_set_musics_volume(audio, volume)
+
 	case .GENERAL:
 		{
 			// General volume for both SOUND and MUSIC
 			for sound in audio.sounds {
 				al.sourcef(sound.source, al.GAIN, audio.volumes[.GENERAL] * audio.volumes[.SOUND])
 			}
-			for music in audio.musics {
-				al.sourcef(music.source, al.GAIN, audio.volumes[.GENERAL] * audio.volumes[.MUSIC])
+			audio_set_musics_volume(audio, volume)
+		}
+	}
+}
+
+audio_set_musics_volume :: proc(audio: ^audio_t, volume: f32) {
+	for music in audio.musics {
+		switch music.music_type {
+		case .STREAMING:
+			al.sourcef(
+				music.music.(^music_streaming_t).source,
+				al.GAIN,
+				audio.volumes[.GENERAL] * audio.volumes[.MUSIC],
+			)
+
+		case .LAYERED:
+			for layer in music.music.(^music_layered_t).layers {
+				al.sourcef(
+					layer.music.source,
+					al.GAIN,
+					audio.volumes[.GENERAL] * audio.volumes[.MUSIC] * layer.volume,
+				)
 			}
 		}
+	}
+}
+
+audio_update_musics :: proc (audio: ^audio_t) {
+	for music in audio.musics {
+		music_update(music)
 	}
 }
 
