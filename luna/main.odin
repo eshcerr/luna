@@ -54,6 +54,7 @@ main :: proc() {
 
 audio: ^sfx.audio_t
 metal_pipe_sound: ^sfx.sound_t
+wiwiwi_sound: ^sfx.sound_t
 rat_dance_music: ^sfx.music_t
 
 renderer: ^gfx.renderer_t
@@ -76,8 +77,9 @@ setup :: proc(app: ^app_t) {}
 
 init :: proc(app: ^app_t) {
 	audio = sfx.audio_init()
-	sfx.audio_set_volume(audio, .GENERAL, 0.01)
+	sfx.audio_set_volume(audio, .GENERAL, 0.1)
 	metal_pipe_sound = sfx.sound_load(assets.get_path(.SFX, "metal_pipe.wav"), audio)
+	wiwiwi_sound = sfx.sound_load(assets.get_path(.SFX, "wiwiwi.wav"), audio)
 	rat_dance_music = sfx.music_init(audio, assets.get_path(.SFX, "rat_dance_meme.wav"))
 
 	renderer = gfx.renderer_init()
@@ -120,6 +122,7 @@ init :: proc(app: ^app_t) {
 
 deinit :: proc(app: ^app_t) {
 	sfx.sound_deinit(metal_pipe_sound, audio)
+	sfx.sound_deinit(wiwiwi_sound, audio)
 	sfx.music_deinit(rat_dance_music, audio)
 	sfx.audio_deinit(audio)
 
@@ -137,9 +140,9 @@ prev_pos, pos: base.vec2
 
 update :: proc(app: ^app_t) {
 	sfx.audio_update_musics(audio)
-	
+
 	if core.inputs_key_pressed(.KEY_P) {
-		sfx.sound_play(metal_pipe_sound)
+		sfx.sound_play(wiwiwi_sound)
 	}
 
 	if core.inputs_key_pressed(.KEY_M) {
