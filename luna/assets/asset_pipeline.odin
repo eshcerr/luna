@@ -1,7 +1,12 @@
 package luna_assets
 
+import "../core"
+import "../gfx"
+
+import "core:encoding/json"
+import "core:encoding/cbor"
 import "core:strings"
-import "core:encoding/json" 
+
 // TODO : json serialisation and deserialisation
 // TODO : json animation save load
 

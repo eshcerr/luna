@@ -72,9 +72,9 @@ shader: ^gfx.shader_t
 font_shader: ^gfx.shader_t
 car_mat: gfx.material_t
 
-setup :: proc(app: ^app_t) {}
+setup :: proc(app: ^application_t) {}
 
-init :: proc(app: ^app_t) {
+init :: proc(app: ^application_t) {
 	audio = sfx.audio_init()
 	sfx.audio_set_volume(audio, .GENERAL, 0.1)
 	wiwiwi_sound = sfx.sound_init(assets.get_path(.SFX, "wiwiwi.wav"), audio)
@@ -118,7 +118,7 @@ init :: proc(app: ^app_t) {
 	font_batch = gfx.batch_init(font_atlas, .FONT)
 }
 
-deinit :: proc(app: ^app_t) {
+deinit :: proc(app: ^application_t) {
 	sfx.audio_deinit(audio)
 
 	gfx.renderer_deinit(renderer)
@@ -133,11 +133,11 @@ deinit :: proc(app: ^app_t) {
 }
 prev_pos, pos: base.vec2
 
-update :: proc(app: ^app_t, delta_time: f32) {
+update :: proc(app: ^application_t, delta_time: f32) {
 	sfx.audio_update_musics(audio)
 }
 
-fixed_update :: proc(app: ^app_t, fixed_delta_time: f32) {
+fixed_update :: proc(app: ^application_t, fixed_delta_time: f32) {
 	prev_pos = pos
 
 	if core.inputs_key_down(.KEY_D) {pos.x += 100.0 * fixed_delta_time}
@@ -166,7 +166,7 @@ fixed_update :: proc(app: ^app_t, fixed_delta_time: f32) {
 	gfx.renderer_update_camera(renderer, &gfx.pip.game_camera)
 }
 
-draw :: proc(app: ^app_t, interpolated_delta_time: f32) {
+draw :: proc(app: ^application_t, interpolated_delta_time: f32) {
 	gfx.renderer_begin()
 
 	gfx.renderer_use_shader(renderer, font_shader)

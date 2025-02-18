@@ -12,14 +12,14 @@ import gl "vendor:OpenGL"
 import "vendor:glfw"
 
 
-app_t :: struct {
-	setup_cb:                 proc(app: ^app_t),
-	init_cb:                  proc(app: ^app_t),
-	event_cb:                 proc(app: ^app_t),
-	update_cb:                proc(app: ^app_t, delta_time: f32),
-	fixed_update_cb:          proc(app: ^app_t, fixed_delta_time: f32),
-	draw_cb:                  proc(app: ^app_t, interpolated_delta_time: f32),
-	deinit_cb:                proc(app: ^app_t),
+application_t :: struct {
+	setup_cb:                 proc(app: ^application_t),
+	init_cb:                  proc(app: ^application_t),
+	event_cb:                 proc(app: ^application_t),
+	update_cb:                proc(app: ^application_t, delta_time: f32),
+	fixed_update_cb:          proc(app: ^application_t, fixed_delta_time: f32),
+	draw_cb:                  proc(app: ^application_t, interpolated_delta_time: f32),
+	deinit_cb:                proc(app: ^application_t),
 	title:                    string,
 	update_per_seconds, time: f32,
 	game_data:                ^any,
@@ -27,7 +27,7 @@ app_t :: struct {
 
 
 app_run :: proc(
-	app: ^app_t,
+	app: ^application_t,
 	render_pip: ^gfx.render_pipeline_t,
 	asset_pip: ^assets.asset_pipeline_t,
 ) {
@@ -75,15 +75,16 @@ app_run :: proc(
 }
 
 @(private = "file")
-app_setup :: proc(app: ^app_t) {
+app_setup :: proc(app: ^application_t) {
 	gfx.render_pipeline_setup()
 	app.setup_cb(app)
 }
 
 @(private = "file")
-app_init :: proc(app: ^app_t) {
+app_init :: proc(app: ^application_t) {
 	gfx.render_pipeline_init(app.title)
 
+	core.inputs_fill_lookup_tables()
 	// TODO : move to input init 
 	glfw.SetKeyCallback(gfx.pip.window_handle.(glfw.WindowHandle), core.inputs_listen_to_glfw_keys)
 	glfw.SetMouseButtonCallback(
@@ -96,8 +97,9 @@ app_init :: proc(app: ^app_t) {
 }
 
 @(private = "file")
-app_deinit :: proc(app: ^app_t) {
+app_deinit :: proc(app: ^application_t) {
 	app.deinit_cb(app)
+	core.inputs_deinit()
 	gfx.render_pipeline_deinit()
 }
 
