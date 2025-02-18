@@ -133,8 +133,17 @@ deinit :: proc(app: ^app_t) {
 }
 prev_pos, pos: base.vec2
 
-update :: proc(app: ^app_t) {
+update :: proc(app: ^app_t, delta_time: f32) {
 	sfx.audio_update_musics(audio)
+}
+
+fixed_update :: proc(app: ^app_t, fixed_delta_time: f32) {
+	prev_pos = pos
+
+	if core.inputs_key_down(.KEY_D) {pos.x += 100.0 * fixed_delta_time}
+	if core.inputs_key_down(.KEY_A) {pos.x -= 100.0 * fixed_delta_time}
+	if core.inputs_key_down(.KEY_S) {pos.y += 100.0 * fixed_delta_time}
+	if core.inputs_key_down(.KEY_W) {pos.y -= 100.0 * fixed_delta_time}
 
 	if core.inputs_key_pressed(.KEY_P) {
 		sfx.sound_play(wiwiwi_sound)
@@ -151,18 +160,8 @@ update :: proc(app: ^app_t) {
 	if core.inputs_key_pressed(.KEY_B) {
 		sfx.music_reset(rat_dance_music)
 	}
-}
 
-fixed_update :: proc(app: ^app_t) {
-	prev_pos = pos
-
-	if core.inputs_key_down(.KEY_D) {pos.x += 100.0 * app.fixed_delta_time}
-	if core.inputs_key_down(.KEY_A) {pos.x -= 100.0 * app.fixed_delta_time}
-	if core.inputs_key_down(.KEY_S) {pos.y += 100.0 * app.fixed_delta_time}
-	if core.inputs_key_down(.KEY_W) {pos.y -= 100.0 * app.fixed_delta_time}
-
-
-	pos += 100.0 * core.input.gamepad.left_stick * app.fixed_delta_time
+	pos += 100.0 * core.input.gamepad.left_stick * fixed_delta_time
 
 	gfx.renderer_update_camera(renderer, &gfx.pip.game_camera)
 }

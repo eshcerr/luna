@@ -80,18 +80,34 @@ audio_set_volume :: proc(audio: ^audio_t, audio_volume_type: audio_volume_type_e
 
 audio_set_musics_volume :: proc(audio: ^audio_t, volume: f32) {
 	for music in audio.musics {
-		al.sourcef(
-			music.source,
-			al.GAIN,
-			audio.volumes[.GENERAL] * audio.volumes[.MUSIC],
-		)
+		al.sourcef(music.source, al.GAIN, audio.volumes[.GENERAL] * audio.volumes[.MUSIC])
 	}
 }
 
 audio_update_musics :: proc(audio: ^audio_t) {
+	processed_buffers, state: i32
+	buffer: u32
+
 	for music in audio.musics {
-		if music.is_playing {
-			music_update(music)
+		if !music.is_playing {
+			continue
+		}
+
+		al.get_sourcei(music.source, al.BUFFERS_PROCESSED, &processed_buffers)
+
+		for processed_buffers > 0 {
+			al.source_unqueue_buffers(music.source, 1, &buffer)
+
+			if music_fill_buffer(music, buffer) {
+				al.source_queue_buffers(music.source, 1, &buffer)
+			}
+
+			processed_buffers -= 1
+		}
+
+		al.get_sourcei(music.source, al.SOURCE_STATE, &state)
+		if state != al.PLAYING {
+			al.source_play(music.source)
 		}
 	}
 }

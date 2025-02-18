@@ -13,19 +13,16 @@ import "vendor:glfw"
 
 
 app_t :: struct {
-	setup_cb:                                               proc(app: ^app_t),
-	init_cb:                                                proc(app: ^app_t),
-	event_cb:                                               proc(app: ^app_t),
-	update_cb:                                              proc(app: ^app_t),
-	fixed_update_cb:                                        proc(app: ^app_t),
-	draw_cb:                                                proc(
-		app: ^app_t,
-		interpolated_delta_time: f32,
-	),
-	deinit_cb:                                              proc(app: ^app_t),
-	title:                                                  string,
-	delta_time, fixed_delta_time, update_per_seconds, time: f32,
-	game_data:                                              ^any,
+	setup_cb:                 proc(app: ^app_t),
+	init_cb:                  proc(app: ^app_t),
+	event_cb:                 proc(app: ^app_t),
+	update_cb:                proc(app: ^app_t, delta_time: f32),
+	fixed_update_cb:          proc(app: ^app_t, fixed_delta_time: f32),
+	draw_cb:                  proc(app: ^app_t, interpolated_delta_time: f32),
+	deinit_cb:                proc(app: ^app_t),
+	title:                    string,
+	update_per_seconds, time: f32,
+	game_data:                ^any,
 }
 
 
@@ -37,7 +34,8 @@ app_run :: proc(
 	gfx.pip = render_pip
 	assets.pip = asset_pip
 
-	app.fixed_delta_time = 1.0 / app.update_per_seconds
+	delta_time: f32 = 0.0
+	fixed_delta_time := 1.0 / app.update_per_seconds
 
 	app_setup(app)
 	app_init(app)
@@ -51,27 +49,27 @@ app_run :: proc(
 	// update loop
 	for !glfw.WindowShouldClose(render_pip.window_handle.(glfw.WindowHandle)) {
 		current_frame = f32(glfw.GetTime())
-		app.delta_time = current_frame - last_frame
+		delta_time = current_frame - last_frame
 		last_frame = current_frame
 
 		glfw.SwapBuffers(render_pip.window_handle.(glfw.WindowHandle))
-		app.time += app.delta_time
-		timer += app.delta_time
-		app.update_cb(app)
+		app.time += delta_time
+		timer += delta_time
+		app.update_cb(app, delta_time)
 		// fixed update loop
-		
-		for timer >= app.fixed_delta_time {
-			timer -= app.fixed_delta_time
+
+		for timer >= fixed_delta_time {
+			timer -= fixed_delta_time
 			// reset inputs values
 			core.inputs_update()
 			glfw.PollEvents()
 			core.inputs_update_mouse(render_pip.window_handle.(glfw.WindowHandle))
 			core.inputs_update_gamepad()
 
-			app.fixed_update_cb(app)
+			app.fixed_update_cb(app, fixed_delta_time)
 		}
 
-		interpolated_delta_time := timer / app.fixed_delta_time
+		interpolated_delta_time := timer / fixed_delta_time
 		app.draw_cb(app, interpolated_delta_time)
 	}
 }

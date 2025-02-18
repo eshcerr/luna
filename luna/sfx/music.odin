@@ -86,29 +86,6 @@ music_reset :: proc(music: ^music_t) {
 	os.seek(music.file, WAV_HEADER_END, os.SEEK_SET)
 }
 
-
-music_update :: proc(music: ^music_t) {
-	processed_buffers: i32
-	al.get_sourcei(music.source, al.BUFFERS_PROCESSED, &processed_buffers)
-
-	for processed_buffers > 0 {
-		buffer: u32
-		al.source_unqueue_buffers(music.source, 1, &buffer)
-
-		if music_fill_buffer(music, buffer) {
-			al.source_queue_buffers(music.source, 1, &buffer)
-		}
-
-		processed_buffers -= 1
-	}
-
-	state: i32
-	al.get_sourcei(music.source, al.SOURCE_STATE, &state)
-	if state != al.PLAYING {
-		al.source_play(music.source)
-	}
-}
-
 music_fill_buffer :: proc(music: ^music_t, buffer: u32) -> bool {
 	temp_data := new([MUSIC_BUFFER_SIZE]byte)
 	defer free(temp_data)

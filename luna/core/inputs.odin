@@ -353,7 +353,7 @@ inputs_update_gamepad :: proc() {
 	if glfw.JoystickPresent(0) && glfw.JoystickIsGamepad(0) {
 		state: glfw.GamepadState
 		if glfw.GetGamepadState(0, &state) != 0 {
-			for i in 0..=glfw.GAMEPAD_BUTTON_LAST {
+			for i in 0 ..= glfw.GAMEPAD_BUTTON_LAST {
 				is_down: bool =
 					(state.buttons[i32(i)] == glfw.PRESS || state.buttons[i32(i)] == glfw.REPEAT)
 				button_code := glfw_gamepad_buttons_lookup_table[i32(i)]
@@ -373,9 +373,12 @@ inputs_update_gamepad :: proc() {
 			}
 			input.gamepad.dpad = linalg.vector_normalize(input.gamepad.dpad)
 
-			apply_deadzone::proc(v:f32) -> f32 {
+			apply_deadzone :: proc(v: f32) -> f32 {
 				if math.abs(v) < GAMEPAD_AXIS_DEADZONE {return 0.0}
-				return (v - (GAMEPAD_AXIS_DEADZONE * (v > 0 ? 1 : -1))) / (1.0 - GAMEPAD_AXIS_DEADZONE)
+				return(
+					(v - (GAMEPAD_AXIS_DEADZONE * (v > 0 ? 1 : -1))) /
+					(1.0 - GAMEPAD_AXIS_DEADZONE) \
+				)
 			}
 
 			input.gamepad.left_stick = base.vec2 {
@@ -394,47 +397,62 @@ inputs_update_gamepad :: proc() {
 	}
 }
 
+inputs_pressed :: proc {
+	inputs_key_pressed,
+	inputs_mouse_button_pressed,
+	inputs_gamepad_button_pressed,
+}
+
+inputs_released :: proc {
+	inputs_key_released,
+	inputs_mouse_button_released,
+	inputs_gamepad_button_released,
+}
+
+inputs_down :: proc {
+	inputs_key_down,
+	inputs_mouse_button_down,
+	inputs_gamepad_button_down,
+}
+
 inputs_key_pressed :: proc(keycode: keycode_e) -> bool {
-	key := input.keyboard.keys[keycode]
-	return key.is_down && key.half_transition_count == 1 || key.half_transition_count > 1
-}
-
-inputs_key_released :: proc(keycode: keycode_e) -> bool {
-	key := input.keyboard.keys[keycode]
-	return !key.is_down && key.half_transition_count == 1 || key.half_transition_count > 1
-}
-
-inputs_key_down :: proc(keycode: keycode_e) -> bool {
-	return input.keyboard.keys[keycode].is_down
+	return input.keyboard.keys[keycode].just_pressed
 }
 
 inputs_mouse_button_pressed :: proc(mouse_button: mouse_buttons_e) -> bool {
-	button := input.mouse.buttons[mouse_button]
-	return button.is_down && button.half_transition_count == 1 || button.half_transition_count > 1
+	return input.mouse.buttons[mouse_button].just_pressed
+}
+
+inputs_gamepad_button_pressed :: proc(gamepad_button: gamepad_buttons_e) -> bool {
+	return input.gamepad.buttons[gamepad_button].just_pressed
+}
+
+
+inputs_key_released :: proc(keycode: keycode_e) -> bool {
+	return input.keyboard.keys[keycode].just_released
 }
 
 inputs_mouse_button_released :: proc(mouse_button: mouse_buttons_e) -> bool {
-	button := input.mouse.buttons[mouse_button]
-	return !button.is_down && button.half_transition_count == 1 || button.half_transition_count > 1
+	return input.mouse.buttons[mouse_button].just_released
+}
+
+inputs_gamepad_button_released :: proc(gamepad_button: gamepad_buttons_e) -> bool {
+	return input.gamepad.buttons[gamepad_button].just_released
+}
+
+
+inputs_key_down :: proc(keycode: keycode_e) -> bool {
+	return input.keyboard.keys[keycode].is_down
 }
 
 inputs_mouse_button_down :: proc(mouse_button: mouse_buttons_e) -> bool {
 	return input.mouse.buttons[mouse_button].is_down
 }
 
-inputs_gamepad_button_pressed :: proc(gamepad_button: gamepad_buttons_e) -> bool {
-	button := input.gamepad.buttons[gamepad_button]
-	return button.is_down && button.half_transition_count == 1 || button.half_transition_count > 1
-}
-
-inputs_gamepad_button_released :: proc(gamepad_button: gamepad_buttons_e) -> bool {
-	button := input.gamepad.buttons[gamepad_button]
-	return !button.is_down && button.half_transition_count == 1 || button.half_transition_count > 1
-}
-
 inputs_gamepad_button_down :: proc(gamepad_button: gamepad_buttons_e) -> bool {
 	return input.gamepad.buttons[gamepad_button].is_down
 }
+
 
 inputs_listen_to_glfw_keys :: proc "c" (
 	window: glfw.WindowHandle,
