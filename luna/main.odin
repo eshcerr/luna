@@ -9,8 +9,6 @@ import "sfx"
 import "core:fmt"
 import "core:math"
 
-import "vendor:glfw"
-
 
 main :: proc() {
 

@@ -27,8 +27,10 @@ layout (std430, binding = 0) buffer batch_sbo {
 
 uniform mat4 orthographic_projection;
 
+
 layout (location = 0) out vec2 uv;
 layout (location = 1) out uint material_id;
+layout (location = 2) out vec2 world_position;
 
 uint OPTIONS_FLIP_X = 1 << 0;
 uint OPTIONS_FLIP_Y = 1 << 1;
@@ -86,6 +88,7 @@ void main()
 
     vec2 vertex_pos = vertices[gl_VertexID];
     gl_Position = orthographic_projection * vec4(vertex_pos, 0.0, 1.0);
+	world_position = gl_Position.xy;
     uv = uv_array[gl_VertexID];
 	material_id = item.material_id;
 `
@@ -102,6 +105,7 @@ layout (std430, binding = 1) buffer materials_sbo {
 
 layout (location = 0) in vec2 uv;
 layout (location = 1) in flat uint material_id;
+layout (location = 2) in vec2 world_position;
 
 layout (location = 0) out vec4 frag_color;
 
@@ -124,7 +128,6 @@ GLSL_FONT_FRAGMENT_SHADER :: `
     if (tex_color.r == 0.0) { discard; }
     frag_color = tex_color.r * material.color;
 `
-
 
 shader_t :: struct {
 	program: u32,
