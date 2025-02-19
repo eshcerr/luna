@@ -56,9 +56,17 @@ COLOR_SKY_BLUE :: vec4{0.53, 0.81, 0.92, 1.0}
 COLOR_SOFT_GRAY :: vec4{0.85, 0.70, 0.75, 1.0}
 COLOR_CORNFLOWER_BLUE :: vec4{0.392, 0.584, 0.929, 1.0}
 
-log_info :: fmt.println
-log_warn :: fmt.println
-log_err :: fmt.println
+log_info :: proc (args: ..any) {
+    fmt.println("[INFO] ", args)
+}
+
+log_warn :: proc (args: ..any) {
+    fmt.println("[WARN] ", args)
+}
+
+log_error :: proc (args: ..any) {
+    fmt.println("[ERROR] ", args)
+}
 
 DEFAULT_WINDOW_WIDTH :: 1280
 DEFAULT_WINDOW_HEIGHT :: 720

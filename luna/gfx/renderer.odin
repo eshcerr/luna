@@ -37,6 +37,8 @@ renderer_init :: proc() -> ^renderer_t {
 	gl.DepthFunc(gl.GREATER)
 
 	gl.Enable(gl.FRAMEBUFFER_SRGB)
+    gl.Enable(gl.BLEND);
+    gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
 	gl.ActiveTexture(gl.TEXTURE0) // only one texture at the time for now
 	return renderer

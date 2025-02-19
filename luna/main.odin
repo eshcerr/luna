@@ -94,7 +94,7 @@ init :: proc(app: ^application_t) {
 	)
 
 	car_mat = {
-		color = base.COLOR_WHITE,
+		color = {1, 1, 1, 0.5},
 	}
 
 
@@ -178,7 +178,7 @@ draw :: proc(app: ^application_t, interpolated_delta_time: f32) {
 		base.vec2{10, 100},
 		base.vec2{1, 1},
 		0,
-		&car_mat,
+		nil,
 	)
 
 	gfx.renderer_draw_batch(renderer, font_batch)
@@ -190,8 +190,8 @@ draw :: proc(app: ^application_t, interpolated_delta_time: f32) {
 		0,
 		math.lerp(prev_pos, pos, interpolated_delta_time),
 		base.vec2{2, 2},
-		app.time,
-		nil,
+		app.time * 32,
+		&car_mat,
 	)
 
 	gfx.renderer_draw_batch(renderer, sprite_batch)
