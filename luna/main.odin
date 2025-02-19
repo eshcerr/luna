@@ -31,6 +31,7 @@ main :: proc() {
 		view_mode = gfx.view_mode_e.TWO_D,
 		clear_color = base.COLOR_CRIMSON,
 		game_camera = {position = base.vec2{160, -90}, dimentions = base.vec2{320, 180}, zoom = 1},
+		ui_camera = {position = base.vec2{160, -90}, dimentions = base.vec2{320, 180}, zoom = 1},
 		window_size = {base.DEFAULT_WINDOW_WIDTH, base.DEFAULT_WINDOW_HEIGHT},
 	}
 
@@ -80,8 +81,10 @@ init :: proc(app: ^application_t) {
 		sfx.audio,
 	)
 
+
 	renderer = gfx.renderer_init()
-	gfx.renderer_update_camera(renderer, &gfx.pip.game_camera)
+	gfx.renderer_use_camera(renderer, &gfx.pip.game_camera)
+
 	shader = gfx.shader_init(
 		assets.get_path(.SHADER, "test_no_tokens.glsl"),
 		gfx.shader_type_e.SPRITE,
@@ -94,7 +97,7 @@ init :: proc(app: ^application_t) {
 	)
 
 	car_mat = {
-		color = {1, 1, 1, 0.5},
+		color = {1, 1, 1, 1},
 	}
 
 
@@ -139,6 +142,7 @@ update :: proc(app: ^application_t, delta_time: f32) {
 
 fixed_update :: proc(app: ^application_t, fixed_delta_time: f32) {
 	prev_pos = pos
+	pos = gfx.pip.game_camera.dimentions / 2 - {f32(car_sprite.width), f32(car_sprite.height)} / 2
 
 	if core.inputs_key_down(.KEY_D) {pos.x += 100.0 * fixed_delta_time}
 	if core.inputs_key_down(.KEY_A) {pos.x -= 100.0 * fixed_delta_time}
@@ -162,12 +166,12 @@ fixed_update :: proc(app: ^application_t, fixed_delta_time: f32) {
 	}
 
 	pos += 100.0 * core.input.gamepad.left_stick * fixed_delta_time
-
-	gfx.renderer_update_camera(renderer, &gfx.pip.game_camera)
+	gfx.pip.game_camera.rotation = app.time.time * 10
 }
 
 draw :: proc(app: ^application_t, interpolated_delta_time: f32) {
 	gfx.renderer_begin()
+	gfx.renderer_use_camera(renderer, &gfx.pip.ui_camera)
 
 	gfx.renderer_use_shader(renderer, font_shader)
 	gfx.batch_begin(font_batch)
@@ -182,15 +186,16 @@ draw :: proc(app: ^application_t, interpolated_delta_time: f32) {
 	)
 
 	gfx.renderer_draw_batch(renderer, font_batch)
-
+	
+	gfx.renderer_use_camera(renderer, &gfx.pip.game_camera)
 	gfx.renderer_use_shader(renderer, shader)
 	gfx.batch_begin(sprite_batch)
 	gfx.batch_add(
 		sprite_batch,
 		0,
 		math.lerp(prev_pos, pos, interpolated_delta_time),
-		base.vec2{2, 2},
-		app.time.time * 32,
+		base.vec2{1, 1},
+		0,//app.time.time * 32,
 		&car_mat,
 	)
 

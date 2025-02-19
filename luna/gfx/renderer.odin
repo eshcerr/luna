@@ -7,7 +7,8 @@ import gl "vendor:OpenGL"
 
 renderer_t :: struct {
 	vao, transform_sbo, material_sbo: u32,
-	game_camera_proj:                 base.mat4,
+	current_camera:                   ^camera_t,
+	camera_proj:                      base.mat4,
 }
 
 renderer_init :: proc() -> ^renderer_t {
@@ -37,8 +38,8 @@ renderer_init :: proc() -> ^renderer_t {
 	gl.DepthFunc(gl.GREATER)
 
 	gl.Enable(gl.FRAMEBUFFER_SRGB)
-    gl.Enable(gl.BLEND);
-    gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+	gl.Enable(gl.BLEND)
+	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 
 	gl.ActiveTexture(gl.TEXTURE0) // only one texture at the time for now
 	return renderer
@@ -57,8 +58,9 @@ renderer_begin :: proc() {
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 }
 
-renderer_update_camera :: proc(renderer: ^renderer_t, camera: ^camera_t) {
-	renderer.game_camera_proj = camera_projection(camera)
+renderer_use_camera :: proc(renderer: ^renderer_t, camera: ^camera_t) {
+	renderer.current_camera = camera
+	renderer.camera_proj = camera_projection(renderer.current_camera)
 }
 
 renderer_use_shader :: proc(renderer: ^renderer_t, shader: ^shader_t) {
@@ -70,7 +72,7 @@ renderer_use_shader :: proc(renderer: ^renderer_t, shader: ^shader_t) {
 		),
 		1,
 		false,
-		&renderer.game_camera_proj[0][0],
+		&renderer.camera_proj[0][0],
 	)
 }
 
