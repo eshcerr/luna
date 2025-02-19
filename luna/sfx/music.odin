@@ -91,6 +91,7 @@ music_stop :: proc(music: ^music_t) {
 
 music_reset :: proc(music: ^music_t) {
 	os.seek(music.file, WAV_HEADER_END, os.SEEK_SET)
+	started = false
 }
 
 music_fill_buffer :: proc(music: ^music_t, buffer: u32) -> bool {
@@ -102,7 +103,8 @@ music_fill_buffer :: proc(music: ^music_t, buffer: u32) -> bool {
 	if err != nil || bytes_read <= 0 {
 		music_reset(music)
 		music.is_playing = music.play_mode == .LOOP
-		return music.play_mode == .LOOP
+		started = music.is_playing
+		return music.is_playing
 	}
 
 	al.buffer_data(buffer, al.FORMAT_STEREO16, &temp_data[0], auto_cast bytes_read, WAV_FREQUENCY)
