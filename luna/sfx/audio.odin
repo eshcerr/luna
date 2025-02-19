@@ -19,6 +19,8 @@ audio_t :: struct {
 	volumes: [audio_volume_type_e]f32,
 }
 
+audio: ^audio_t
+
 audio_volume_type_e :: enum {
 	GENERAL,
 	SOUND,

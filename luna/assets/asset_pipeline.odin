@@ -19,11 +19,10 @@ asset_type_e :: enum {
 	BAKED_FONT,
 	SFX,
 	DATA,
-	COUNT,
 }
 
 asset_pipeline_t :: struct {
-	paths: [asset_type_e.COUNT]string,
+	paths: [asset_type_e]string,
 }
 
 pip: ^asset_pipeline_t

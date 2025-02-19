@@ -10,13 +10,13 @@ import "shared:odin-al/alc"
 MUSIC_BUFFER_SIZE :: 16384
 
 music_t :: struct {
-	play_mode:  music_play_mode_e,
-	is_playing: bool,
-	volume:     f32,
-	index:      int,
-	source:     u32,
-	buffers:    [2]u32,
-	file:       os.Handle,
+	play_mode:           music_play_mode_e,
+	is_playing, started: bool,
+	volume:              f32,
+	index:               int,
+	source:              u32,
+	buffers:             [2]u32,
+	file:                os.Handle,
 }
 
 music_play_mode_e :: enum {
@@ -32,7 +32,11 @@ music_init :: proc(path: string, play_mode: music_play_mode_e, audio: ^audio_t) 
 
 	al.gen_sources(1, &music.source)
 	al.gen_buffers(2, &music.buffers[0])
-	al.sourcef(music.source, al.GAIN, audio.volumes[.GENERAL] * audio.volumes[.MUSIC] * music.volume)
+	al.sourcef(
+		music.source,
+		al.GAIN,
+		audio.volumes[.GENERAL] * audio.volumes[.MUSIC] * music.volume,
+	)
 
 	err: os.Error
 	music.file, err = os.open(path)
@@ -63,10 +67,13 @@ music_play :: proc(music: ^music_t) {
 		return
 	}
 
-	for buffer in music.buffers {
-		if !music_fill_buffer(music, buffer) {
-			return
+	if !music.started {
+		for buffer in music.buffers {
+			if !music_fill_buffer(music, buffer) {
+				return
+			}
 		}
+		music.started = true
 	}
 
 	al.source_queue_buffers(music.source, 2, &music.buffers[0])
@@ -77,12 +84,14 @@ music_play :: proc(music: ^music_t) {
 }
 
 music_stop :: proc(music: ^music_t) {
-	al.source_unqueue_buffers(music.source, 2, &music.buffers[0])
 	al.source_stop(music.source)
+	al.source_unqueue_buffers(music.source, 2, &music.buffers[0])
 	music.is_playing = false
 }
 
 music_reset :: proc(music: ^music_t) {
+	al.source_unqueue_buffers(music.source, 2, &music.buffers[0])
+	al.source_stop(music.source)
 	os.seek(music.file, WAV_HEADER_END, os.SEEK_SET)
 }
 

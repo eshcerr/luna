@@ -14,42 +14,47 @@ import "vendor:glfw"
 
 main :: proc() {
 
-	app_run(
-		app = &{
-			setup_cb = setup,
-			init_cb = init,
-			update_cb = update,
-			fixed_update_cb = fixed_update,
-			draw_cb = draw,
-			deinit_cb = deinit,
-			title = "luna",
-			update_per_seconds = 60,
-		},
-		render_pip = &{
-			backend = gfx.supported_backend_e.opengl,
-			view_mode = gfx.view_mode_e.two_d,
-			clear_color = base.COLOR_CRIMSON,
-			game_camera = {
-				position   = base.vec2 { 	// [0, 0] on top left
-					180,
-					-90,
-				},
-				dimentions = base.vec2{360, 180},
-				zoom       = 1,
+	pipeline := new(application_pipeline_t)
+
+	pipeline.callbacks =
+	&{
+		setup_cb = setup,
+		init_cb = init,
+		update_cb = update,
+		fixed_update_cb = fixed_update,
+		draw_cb = draw,
+		deinit_cb = deinit,
+	}
+
+	pipeline.render_pip = &{
+		window_provider = gfx.window_provider_e.GLFW,
+		backend = gfx.supported_backend_e.OPENGL,
+		view_mode = gfx.view_mode_e.TWO_D,
+		clear_color = base.COLOR_CRIMSON,
+		game_camera = {
+			position   = base.vec2 { 	// [0, 0] on top left
+				180,
+				-90,
 			},
-			window_size = {base.DEFAULT_WINDOW_WIDTH, base.DEFAULT_WINDOW_HEIGHT},
+			dimentions = base.vec2{360, 180},
+			zoom       = 1,
 		},
-		asset_pip = &{
-			paths = {
-				assets.asset_type_e.IMAGE = "assets/images/",
-				assets.asset_type_e.SHADER = "assets/shaders/",
-				assets.asset_type_e.FONT = "assets/fonts/",
-				assets.asset_type_e.BAKED_FONT = "assets/fonts/baked/",
-				assets.asset_type_e.SFX = "assets/sfx/",
-				assets.asset_type_e.DATA = "assets/data/",
-			},
+		window_size = {base.DEFAULT_WINDOW_WIDTH, base.DEFAULT_WINDOW_HEIGHT},
+	}
+
+	pipeline.asset_pip =
+	&{
+		paths = {
+			.IMAGE = "assets/images/",
+			.SHADER = "assets/shaders/",
+			.FONT = "assets/fonts/",
+			.BAKED_FONT = "assets/fonts/baked/",
+			.SFX = "assets/sfx/",
+			.DATA = "assets/data/",
 		},
-	)
+	}
+
+	app_run(app = &{title = "luna", pipeline = pipeline, time = {update_per_second = 60}})
 }
 
 audio: ^sfx.audio_t
@@ -75,10 +80,13 @@ car_mat: gfx.material_t
 setup :: proc(app: ^application_t) {}
 
 init :: proc(app: ^application_t) {
-	audio = sfx.audio_init()
-	sfx.audio_set_volume(audio, .GENERAL, 0.1)
-	wiwiwi_sound = sfx.sound_init(assets.get_path(.SFX, "wiwiwi.wav"), audio)
-	rat_dance_music = sfx.music_init(assets.get_path(.SFX, "rat_dance_meme.wav"), .SINGLE, audio)
+	sfx.audio_set_volume(sfx.audio, .GENERAL, 0.1)
+	wiwiwi_sound = sfx.sound_init(assets.get_path(.SFX, "wiwiwi.wav"), sfx.audio)
+	rat_dance_music = sfx.music_init(
+		assets.get_path(.SFX, "rat_dance_meme.wav"),
+		.SINGLE,
+		sfx.audio,
+	)
 
 	renderer = gfx.renderer_init()
 	gfx.renderer_update_camera(renderer, &gfx.pip.game_camera)
@@ -119,7 +127,8 @@ init :: proc(app: ^application_t) {
 }
 
 deinit :: proc(app: ^application_t) {
-	sfx.audio_deinit(audio)
+	sfx.sound_deinit(wiwiwi_sound, sfx.audio)
+	sfx.music_deinit(rat_dance_music, sfx.audio)
 
 	gfx.renderer_deinit(renderer)
 	gfx.batch_deinit(sprite_batch)
@@ -134,7 +143,6 @@ deinit :: proc(app: ^application_t) {
 prev_pos, pos: base.vec2
 
 update :: proc(app: ^application_t, delta_time: f32) {
-	sfx.audio_update_musics(audio)
 }
 
 fixed_update :: proc(app: ^application_t, fixed_delta_time: f32) {
@@ -190,7 +198,7 @@ draw :: proc(app: ^application_t, interpolated_delta_time: f32) {
 		0,
 		math.lerp(prev_pos, pos, interpolated_delta_time),
 		base.vec2{2, 2},
-		app.time * 32,
+		app.time.time * 32,
 		&car_mat,
 	)
 

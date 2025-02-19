@@ -11,17 +11,17 @@ GL_MAJOR_VERSION :: 4
 GL_MINOR_VERSION :: 3
 
 supported_backend_e :: enum {
-	opengl,
+	OPENGL,
 	// TODO : support vulkan
 }
 
 view_mode_e :: enum {
-	two_d,
+	TWO_D,
 }
 
 window_provider_e :: enum {
 	//TODO : native window provider impl for windows and linux,
-	glfw,
+	GLFW,
 	//TODO : sdl2 window provider impl,
 	//TODO : raylib window provider impl,
 }
