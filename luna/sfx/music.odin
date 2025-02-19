@@ -90,8 +90,6 @@ music_stop :: proc(music: ^music_t) {
 }
 
 music_reset :: proc(music: ^music_t) {
-	al.source_unqueue_buffers(music.source, 2, &music.buffers[0])
-	al.source_stop(music.source)
 	os.seek(music.file, WAV_HEADER_END, os.SEEK_SET)
 }
 
