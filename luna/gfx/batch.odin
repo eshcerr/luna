@@ -157,7 +157,7 @@ batch_add_from_animation :: proc(
 	batch_add_from_atlas(
 		batch,
 		animation_get_frame_rect(animation),
-		position,
+		position + animation_current_frame(animation).offset,
 		scale,
 		rotation,
 		material,

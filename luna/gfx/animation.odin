@@ -28,10 +28,15 @@ animation_state_t :: struct {
 animation_frame_t :: struct {
 	duration:   f32,
 	atlas_rect: u32,
+	offset: base.vec2,
 }
 
 animation_get_frame_rect :: proc(animation: ^animation_t) -> u32 {
 	return animation.frames[animation.state.current_frame_index].atlas_rect
+}
+
+animation_current_frame :: proc(animation: ^animation_t) -> animation_frame_t {
+	return animation.frames[animation.state.current_frame_index]
 }
 
 animation_deinit :: proc(animation: ^animation_t) {
