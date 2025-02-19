@@ -41,11 +41,11 @@ void main()
 	
     vec2 vertices[6] = {
         item.position,
-        vec2(item.position + vec2(0.0, item.rect.w * item.scale.y)),
+        vec2(item.position - vec2(0.0, item.rect.w * item.scale.y)),
         vec2(item.position + vec2(item.rect.z * item.scale.x, 0.0)),
         vec2(item.position + vec2(item.rect.z * item.scale.x, 0.0)),
-        vec2(item.position + vec2(0.0, item.rect.w * item.scale.y)),
-        item.position + item.rect.zw * item.scale
+        vec2(item.position - vec2(0.0, item.rect.w * item.scale.y)),
+        item.position + vec2(item.rect.z * item.scale.x, -(item.rect.w * item.scale.y))
 	};
 
 	if (item.rotation != 0.0f) {

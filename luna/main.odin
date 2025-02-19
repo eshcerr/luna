@@ -50,7 +50,6 @@ main :: proc() {
 	app_run(app = &{title = "luna", pipeline = pipeline, time = {update_per_second = 60}})
 }
 
-audio: ^sfx.audio_t
 wiwiwi_sound: ^sfx.sound_t
 rat_dance_music: ^sfx.music_t
 
@@ -111,7 +110,7 @@ init :: proc(app: ^application_t) {
 	font_sprite = gfx.sprite_from_png(assets.get_path(.BAKED_FONT, "essential.png"))
 	font_atlas = gfx.atlas_init_from_font(font_sprite, font, 4)
 
-	car_sprite = gfx.sprite_from_png(assets.get_path(.IMAGE, "test.png"))
+	car_sprite = gfx.sprite_from_png(assets.get_path(.IMAGE, "car.png"))
 	car_atlas = gfx.atlas_init(
 		car_sprite,
 		{0 = base.iaabb{0, 0, car_sprite.width, car_sprite.height}},
@@ -142,12 +141,21 @@ update :: proc(app: ^application_t, delta_time: f32) {
 
 fixed_update :: proc(app: ^application_t, fixed_delta_time: f32) {
 	prev_pos = pos
-	pos = gfx.pip.game_camera.dimentions / 2 - {f32(car_sprite.width), f32(car_sprite.height)} / 2
+
 
 	if core.inputs_key_down(.KEY_D) {pos.x += 100.0 * fixed_delta_time}
 	if core.inputs_key_down(.KEY_A) {pos.x -= 100.0 * fixed_delta_time}
-	if core.inputs_key_down(.KEY_S) {pos.y += 100.0 * fixed_delta_time}
-	if core.inputs_key_down(.KEY_W) {pos.y -= 100.0 * fixed_delta_time}
+	if core.inputs_key_down(.KEY_W) {pos.y += 100.0 * fixed_delta_time}
+	if core.inputs_key_down(.KEY_S) {pos.y -= 100.0 * fixed_delta_time}
+
+	if core.inputs_key_down(.KEY_LEFT) {gfx.pip.game_camera.position.x += 100.0 * fixed_delta_time}
+	if core.inputs_key_down(
+		.KEY_RIGHT,
+	) {gfx.pip.game_camera.position.x -= 100.0 * fixed_delta_time}
+	if core.inputs_key_down(.KEY_UP) {gfx.pip.game_camera.position.y += 100.0 * fixed_delta_time}
+	if core.inputs_key_down(.KEY_DOWN) {gfx.pip.game_camera.position.y -= 100.0 * fixed_delta_time}
+	if core.inputs_key_down(.KEY_U) {gfx.pip.game_camera.rotation += 100.0 * fixed_delta_time}
+	if core.inputs_key_down(.KEY_I) {gfx.pip.game_camera.rotation -= 100.0 * fixed_delta_time}
 
 	if core.inputs_key_pressed(.KEY_P) {
 		sfx.sound_play(wiwiwi_sound)
@@ -164,9 +172,7 @@ fixed_update :: proc(app: ^application_t, fixed_delta_time: f32) {
 	if core.inputs_key_pressed(.KEY_B) {
 		sfx.music_reset(rat_dance_music)
 	}
-
 	pos += 100.0 * core.input.gamepad.left_stick * fixed_delta_time
-	gfx.pip.game_camera.rotation = app.time.time * 10
 }
 
 draw :: proc(app: ^application_t, interpolated_delta_time: f32) {
@@ -186,7 +192,7 @@ draw :: proc(app: ^application_t, interpolated_delta_time: f32) {
 	)
 
 	gfx.renderer_draw_batch(renderer, font_batch)
-	
+
 	gfx.renderer_use_camera(renderer, &gfx.pip.game_camera)
 	gfx.renderer_use_shader(renderer, shader)
 	gfx.batch_begin(sprite_batch)
@@ -194,8 +200,8 @@ draw :: proc(app: ^application_t, interpolated_delta_time: f32) {
 		sprite_batch,
 		0,
 		math.lerp(prev_pos, pos, interpolated_delta_time),
-		base.vec2{1, 1},
-		0,//app.time.time * 32,
+		base.vec2{0.25, 0.25},
+		0, //app.time.time * 32,
 		&car_mat,
 	)
 
