@@ -48,16 +48,18 @@ void main()
         item.position + item.rect.zw * item.scale
 	};
 
-	mat2 rotation;
-	rotation[0] = vec2(cos(item.rotation), -sin(item.rotation));
-	rotation[1] = vec2(sin(item.rotation), cos(item.rotation));
-
-	vec2 center = item.position + vec2(item.rect.z * item.scale.x, item.rect.w * item.scale.y) / 2.0;
-	
-	for (int i = 0; i <= 6; i++) {
-		vertices[i] = vertices[i] - center;
-		vertices[i] = vertices[i] * rotation;
-		vertices[i] = vertices[i] + center;
+	if (item.rotation != 0.0f) {
+		mat2 rotation;
+		rotation[0] = vec2(cos(item.rotation), -sin(item.rotation));
+		rotation[1] = vec2(sin(item.rotation), cos(item.rotation));
+		
+		vec2 center = item.position + vec2(item.rect.z * item.scale.x, item.rect.w * item.scale.y) / 2.0;
+		
+		for (int i = 0; i <= 6; i++) {
+			vertices[i] = vertices[i] - center;
+			vertices[i] = vertices[i] * rotation;
+			vertices[i] = vertices[i] + center;
+		}
 	}
 
     float left = item.rect.x;
@@ -88,9 +90,9 @@ void main()
 
     vec2 vertex_pos = vertices[gl_VertexID];
     gl_Position = orthographic_projection * vec4(vertex_pos, 0.0, 1.0);
-	world_position = gl_Position.xy;
     uv = uv_array[gl_VertexID];
 	material_id = item.material_id;
+	world_position = gl_Position.xy;
 `
 
 

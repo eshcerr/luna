@@ -77,7 +77,7 @@ app_run :: proc(app: ^application_t) {
 			app.pipeline.callbacks.fixed_update_cb(app, app.time.fixed_delta_time)
 		}
 
-		app.time.interpolated_delta_time = app.time.time / app.time.fixed_delta_time
+		app.time.interpolated_delta_time = fixed_update_timer / app.time.fixed_delta_time
 		app.pipeline.callbacks.draw_cb(app, app.time.interpolated_delta_time)
 	}
 }
