@@ -14,6 +14,7 @@ camera_t :: struct {
 	zoom:                 f32,
 }
 
+// TODO : implement camera zoom
 camera_projection :: proc(camera: ^camera_t) -> base.mat4 {
 	return linalg.matrix_ortho3d_f32(
 		camera.position.x - camera.dimentions.x / 2.0,

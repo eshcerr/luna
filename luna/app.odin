@@ -52,7 +52,7 @@ app_run :: proc(app: ^application_t) {
 	app_init(app)
 	defer app_deinit(app)
 
-	fixed_update_timer : f32
+	fixed_update_timer: f32 = 0
 
 	for !glfw.WindowShouldClose(gfx.pip.window_handle.(glfw.WindowHandle)) {
 		app.time.current_frame = f32(glfw.GetTime())
@@ -68,7 +68,7 @@ app_run :: proc(app: ^application_t) {
 
 		for fixed_update_timer >= app.time.fixed_delta_time {
 			fixed_update_timer -= app.time.fixed_delta_time
-			
+
 			core.inputs_update()
 			glfw.PollEvents()
 			core.inputs_update_mouse(gfx.pip.window_handle.(glfw.WindowHandle))

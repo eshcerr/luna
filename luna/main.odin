@@ -24,19 +24,13 @@ main :: proc() {
 		deinit_cb = deinit,
 	}
 
-	pipeline.render_pip = &{
+	pipeline.render_pip =
+	&{
 		window_provider = gfx.window_provider_e.GLFW,
 		backend = gfx.supported_backend_e.OPENGL,
 		view_mode = gfx.view_mode_e.TWO_D,
 		clear_color = base.COLOR_CRIMSON,
-		game_camera = {
-			position   = base.vec2 { 	// [0, 0] on top left
-				180,
-				-90,
-			},
-			dimentions = base.vec2{360, 180},
-			zoom       = 1,
-		},
+		game_camera = {position = base.vec2{160, -90}, dimentions = base.vec2{320, 180}, zoom = 1},
 		window_size = {base.DEFAULT_WINDOW_WIDTH, base.DEFAULT_WINDOW_HEIGHT},
 	}
 
