@@ -1,4 +1,5 @@
-package luna
+#+feature dynamic-literals
+package luna 
 
 import "assets"
 import "base"

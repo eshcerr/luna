@@ -29,7 +29,7 @@ uniform mat4 orthographic_projection;
 
 
 layout (location = 0) out vec2 uv;
-layout (location = 1) out uint material_id;
+layout (location = 1) out flat uint material_id;
 layout (location = 2) out vec2 world_position;
 
 uint OPTIONS_FLIP_X = 1 << 0;
