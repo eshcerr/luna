@@ -38,8 +38,14 @@ ui_element_process_inputs :: proc(ctx, ^ui_context_t, elem: ^ui_element_t, input
             ui_element_process_inputs(child_element, inputs)
         }
     case button_t:
-        if core.iaabb_contains(ctx.mouse_pos){
-            
+        elem.element.(button_t).state = button_state_e(i32(core.iaabb_contains(elem.bounding_box, ctx.mouse_pos)))        
+        if (elem.element.(button_t).state == .HOVERED) {
+            elem.element.(button_t).state += button_state_e(i32(core.inputs_mouse_button_down(.MOUSE_BUTTON_1)))
+        }
+    case toggle_t:
+        elem.element.(toggle_t).state = button_state_e(i32(core.iaabb_contains(ctx.mouse_pos)))        
+        if (core.inputs_mouse_button_down(.MOUSE_BUTTON_1)) {
+            elem.element.(toggle_t).value = !elem.element.(toggle_t).value
         }
     }
 }
@@ -95,6 +101,7 @@ button_t :: struct {
 }
 
 toggle_t :: struct {
+    state: button_state_e,
     value: bool,
 }
 
