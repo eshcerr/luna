@@ -5,6 +5,7 @@ import "../base"
 import "../gfx"
 
 import "core:c"
+import "core:fmt"
 import "core:strings"
 import "core:math"
 import "core:math/linalg"
@@ -180,6 +181,7 @@ input_t :: struct {
 	mouse:       mouse_t,
 	keyboard:    keyboard_t,
 	gamepad:     gamepad_t,
+    input_mapping: input_mapping_t
 }
 
 INPUT_MAXIMUM_BUTTONS_PER_ACTION :: 4
@@ -315,16 +317,16 @@ inputs_down :: proc {
 
 inputs_action_down :: proc(action_map: ^input_mapping_t, action_id: i32) -> bool {
     action, ok := action_map.actions[action_id]
-    assert(ok, strings.concatenate({"unregistered action: ", action_id}))
+    assert(ok, "unregistered action: ")
     for button in action.buttons {
-        if button.just_down {return true}
+        if button.is_down {return true}
     }
     return false
 }
 
 inputs_action_pressed :: proc(action_map: ^input_mapping_t, action_id: i32) -> bool {
     action, ok := action_map.actions[action_id]
-    assert(ok, strings.concatenate({"unregistered action: ", action_id}))
+    assert(ok, "unregistered action: ")
     for button in action.buttons {
         if button.just_pressed {return true}
     }
@@ -333,7 +335,7 @@ inputs_action_pressed :: proc(action_map: ^input_mapping_t, action_id: i32) -> b
 
 inputs_action_released :: proc(action_map: ^input_mapping_t, action_id: i32) -> bool {
     action, ok := action_map.actions[action_id]
-    assert(ok, strings.concatenate({"unregistered action: ", action_id}))
+    assert(ok, "unregistered action: ")
     for button in action.buttons {
         if button.just_released {return true}
     }
