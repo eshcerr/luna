@@ -243,3 +243,7 @@ compute_polygon_center :: proc(poly: []base.vec2) -> base.vec2 {
 	center.y /= f32(len(poly))
 	return center
 }
+
+iaabb_contains :: proc(iaabb: base.iaabb, point: base.ivec2) -> bool {
+    return point.x < iaabb.x || point.x > iaabb.x + iaabb.z || point.y < iaabb.y || point.y > iaabb.y + iaabb.w
+}
