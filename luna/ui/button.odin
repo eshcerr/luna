@@ -17,8 +17,6 @@ ui_context_t :: struct {
     mouse_pos : base.ivec2,
 }
 
-
-
 ui_context_process_inputs :: proc(ctx: ^ui_context_t, inputs: ^core.input_t) {
     switch ctx.space {
     case .WORLD: 
@@ -47,6 +45,14 @@ ui_element_process_inputs :: proc(ctx, ^ui_context_t, elem: ^ui_element_t, input
         if (core.inputs_mouse_button_down(.MOUSE_BUTTON_1)) {
             elem.element.(toggle_t).value = !elem.element.(toggle_t).value
         }
+    case radio_button_t:
+        elem.element.(toggle_t).state = button_state_e(i32(core.iaabb_contains(ctx.mouse_pos)))        
+        if core.inputs_mouse_button_pressed(.MOUSE_BUTTON_1) {
+            group := elem.element.(radio_button_t).group
+            group.buttons[group.selected_button_index].value = false
+            elem.element.(radio_button_t).value = true
+            group.selected_button_index = elem.element.(radio_button_t).index
+        }
     }
 }
 
@@ -62,9 +68,12 @@ ui_element_t :: struct {
     element: union {
         ^ui_container_t,
         button_t,
+        toggle_t,
+        radio_button_t,
         slider_t,
         label_t,
         text_filed_t,
+        combo_box_t,
     },
     bounding_box:               base.iaabb,
     padding, margin, border:    base.ivec4,
@@ -113,6 +122,7 @@ radio_button_group_t :: struct {
 radio_button_t :: struct {
     group: ^radio_button_group_t,
     value: bool,
+    index: i32,
 }
 
 slider_t :: struct {
