@@ -18,7 +18,8 @@ batch_t :: struct {
 
 batch_item_t :: struct #packed {
 	rect:            base.iaabb,
-	position, scale: base.vec2,
+	position, size:  base.ivec2,
+    scale:           base.vec2,
 	rotation:        f32,
 	material_id:     u32,
 	options:         rendering_options_e,
@@ -122,7 +123,7 @@ batch_add_item :: proc(batch: ^batch_t, item: batch_item_t) {
 batch_add_from_atlas :: proc(
 	batch: ^batch_t,
 	atlas_item: u32,
-	position: base.vec2,
+	position, size: base.ivec2,
 	scale: base.vec2 = {1, 1},
 	rotation: f32 = 0.0,
 	material: ^material_t = nil,
@@ -137,6 +138,7 @@ batch_add_from_atlas :: proc(
 		batch_item_t {
 			rect = rect,
 			position = position,
+            size = size,
 			scale = scale,
 			rotation = math.to_radians_f32(rotation),
 			material_id = batch_get_or_create_material_id(batch, material),
@@ -148,7 +150,7 @@ batch_add_from_atlas :: proc(
 batch_add_from_animation :: proc(
 	batch: ^batch_t,
 	animation: ^animation_t,
-	position: base.vec2,
+	position, size: base.ivec2,
 	scale: base.vec2 = {1, 1},
 	rotation: f32 = 0.0,
 	material: ^material_t = nil,
@@ -158,6 +160,7 @@ batch_add_from_animation :: proc(
 		batch,
 		animation_get_frame_rect(animation),
 		position + animation_current_frame(animation).offset,
+        size,
 		scale,
 		rotation,
 		material,
@@ -170,7 +173,7 @@ batch_add_text :: proc(
 	batch: ^batch_t,
 	text: string,
 	font: ^font_t,
-	position: base.vec2,
+	position: base.ivec2,
 	scale: base.vec2 = {1, 1},
 	rotation: f32 = 0.0,
 	material: ^material_t = nil,
@@ -181,8 +184,8 @@ batch_add_text :: proc(
 	local_position := position
 	for character in text {
 		if character == '\n' {
-			local_position.x = position.x - font_get_glyph_offset(font, ' ').x * scale.x
-			local_position.y += f32(font.font_height) * scale.y
+			local_position.x = position.x - i32(font_get_glyph_offset(font, ' ').x * scale.x)
+			local_position.y += i32(f32(font.font_height) * scale.y)
 			continue
 		}
 
@@ -195,14 +198,15 @@ batch_add_text :: proc(
 			&batch.items,
 			batch_item_t {
 				rect = char_rect,
-				position = local_position + font_get_glyph_offset(font, character) * scale,
-				scale = scale,
+				position = local_position + base.vec2_to_ivec2(font_get_glyph_offset(font, character) * scale),
+				size = {char_rect.z, font.font_height},
+                scale = scale,
 				rotation = math.to_radians_f32(rotation),
 				material_id = batch_get_or_create_material_id(batch, material),
 				options = options,
 			},
 		)
 
-		local_position.x += f32(char_rect.z + 1) * scale.x
+		local_position.x += i32(f32(char_rect.z + 1) * scale.x)
 	}
 }

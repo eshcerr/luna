@@ -28,7 +28,7 @@ animation_state_t :: struct {
 animation_frame_t :: struct {
 	duration:   f32,
 	atlas_rect: u32,
-	offset: base.vec2,
+	offset: base.ivec2,
 }
 
 animation_get_frame_rect :: proc(animation: ^animation_t) -> u32 {

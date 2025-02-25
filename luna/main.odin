@@ -186,8 +186,8 @@ draw :: proc(app: ^application_t, interpolated_delta_time: f32) {
 		font_batch,
 		"yeeeet !!\nthis is a mother fucking text !",
 		font,
-		base.vec2{10, 100},
-		base.vec2{1, 1},
+		base.ivec2{10, 100},
+        base.vec2{1, 1},
 		0,
 		nil,
 	)
@@ -200,7 +200,8 @@ draw :: proc(app: ^application_t, interpolated_delta_time: f32) {
 	gfx.batch_add(
 		sprite_batch,
 		0,
-		math.lerp(prev_pos, pos, interpolated_delta_time),
+		base.vec2_to_ivec2(math.lerp(prev_pos, pos, interpolated_delta_time)),
+		base.ivec2{128, 128},
 		base.vec2{0.25, 0.25},
 		0, //app.time.time * 32,
 		&car_mat,

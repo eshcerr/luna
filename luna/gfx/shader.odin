@@ -14,7 +14,8 @@ GLSL_VERSION :: "#version 430 core\n"
 GLSL_VERTEX_SHADER :: `
 struct batch_item_t {
     ivec4 rect;
-    vec2 position;
+    ivec2 position;
+    ivec2 size;
     vec2 scale;
     float rotation;
 	uint material_id;
@@ -41,11 +42,11 @@ void main()
 	
     vec2 vertices[6] = {
         item.position,
-        vec2(item.position - vec2(0.0, item.rect.w * item.scale.y)),
-        vec2(item.position + vec2(item.rect.z * item.scale.x, 0.0)),
-        vec2(item.position + vec2(item.rect.z * item.scale.x, 0.0)),
-        vec2(item.position - vec2(0.0, item.rect.w * item.scale.y)),
-        item.position + vec2(item.rect.z * item.scale.x, -(item.rect.w * item.scale.y))
+        vec2(item.position - vec2(0.0, int(item.size.y * item.scale.y))),
+        vec2(item.position + vec2(int(item.size.x * item.scale.x), 0.0)),
+        vec2(item.position + vec2(int(item.size.x * item.scale.x), 0.0)),
+        vec2(item.position - vec2(0.0, int(item.size.y * item.scale.y))),
+        item.position + ivec2(item.size.x * item.scale.x, -(item.size.y * item.scale.y))
 	};
 
 	if (item.rotation != 0.0f) {
@@ -53,7 +54,7 @@ void main()
 		rotation[0] = vec2(cos(item.rotation), -sin(item.rotation));
 		rotation[1] = vec2(sin(item.rotation), cos(item.rotation));
 		
-		vec2 center = item.position + vec2(item.rect.z * item.scale.x, item.rect.w * item.scale.y) / 2.0;
+		vec2 center = item.position + ivec2(item.size.x * item.scale.x, item.size.y * item.scale.y) / 2;
 		
 		for (int i = 0; i <= 6; i++) {
 			vertices[i] = vertices[i] - center;
