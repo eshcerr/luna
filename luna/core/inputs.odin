@@ -1,4 +1,4 @@
-#+feature dynamic-literals
+//#+feature dynamic-literals
 package luna_core
 
 import "../base"

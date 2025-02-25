@@ -100,7 +100,10 @@ GLSL_FRAGMENT_SHADER :: `
 struct point_light_t {
     vec3 color;
     ivec2 position;
+    vec2 direction;
     float intensity;
+    float cutoff;
+    float smooth_cutoff;
 };
 
 struct material_t {
@@ -124,9 +127,18 @@ uniform mat4 orthographic_projection;
 uniform point_light_t light;
 
 vec3 calculate_lights() {
-    float distance = length(world_position - light.position);
-    float attenuation = light.intensity / (1.0 + 0.25 * distance + 0.075 * distance * distance);
-    vec3 color = clamp(light.color * light.intensity * attenuation, 0.0, 1.0);
+	vec3 color = vec3(0, 0, 0);
+	vec2 light_to_fragment = normalize(world_position - light.position);
+	float theta = dot(light_to_fragment, normalize(light.direction));
+
+	if (theta > cos(radians(light.smooth_cutoff))) {
+		float intensity = clamp((theta - cos(radians(light.smooth_cutoff))) / (cos(radians(light.cutoff)) - cos(radians(light.smooth_cutoff))), 0.0, 1.0);
+		float distance = length(world_position - light.position);
+		float attenuation = light.intensity / (0.4 * distance + 0.025 * distance * distance);
+		//float attenuation = 1.0;// - (1.0 - theta) * 1.0 / (1.0 - light.cutoff);
+		color = clamp(light.color * light.intensity * attenuation * intensity, 0.0, 1.0);
+	}
+
     return color;// + global_light_color;
 }
 
@@ -147,6 +159,7 @@ GLSL_FONT_FRAGMENT_SHADER :: `
     if (tex_color.r == 0.0) { discard; }
     frag_color = tex_color.r * material.color;
 `
+
 
 shader_t :: struct {
 	program: u32,

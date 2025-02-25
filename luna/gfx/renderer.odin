@@ -3,6 +3,7 @@ package luna_gfx
 import "../base"
 
 import "core:strings"
+import "core:math"
 import gl "vendor:OpenGL"
 
 renderer_t :: struct {
@@ -75,12 +76,15 @@ renderer_use_shader :: proc(renderer: ^renderer_t, shader: ^shader_t) {
 		&renderer.camera_proj[0][0],
 	)
 
-    light:= point_light{color = {1, 0.3, 0.7}, position = {0, 0}, intensity = 10}
+    light:= spot_light_t{color = {1, 0.3, 0.7}, position = {0, 0}, intensity = 10, direction = {1, -1.5}, cutoff = 20, smooth_cutoff = 30}
     glc:= base.vec3{0.5, 0.5, 0.5}
     gl.Uniform3fv(gl.GetUniformLocation(shader.program, "global_light_color"), 1, &glc[0])
     gl.Uniform3fv(gl.GetUniformLocation(shader.program, "light.color"), 1, &light.color[0])
     gl.Uniform2iv(gl.GetUniformLocation(shader.program, "light.position"), 1, &light.position[0])
+    gl.Uniform2fv(gl.GetUniformLocation(shader.program, "light.direction"), 1, &light.direction[0])
     gl.Uniform1f(gl.GetUniformLocation(shader.program, "light.intensity"), light.intensity)
+    gl.Uniform1f(gl.GetUniformLocation(shader.program, "light.cutoff"), light.cutoff)
+    gl.Uniform1f(gl.GetUniformLocation(shader.program, "light.smooth_cutoff"), light.smooth_cutoff)
 }
 
 renderer_draw_batch :: proc(renderer: ^renderer_t, batch: ^batch_t) {

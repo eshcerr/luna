@@ -1,4 +1,4 @@
-#+feature dynamic-literals
+//#+feature dynamic-literals
 package luna 
 
 import "assets"
@@ -199,7 +199,7 @@ draw :: proc(app: ^application_t, interpolated_delta_time: f32) {
 		sprite_batch,
 		0,
 		base.vec2_to_ivec2(math.lerp(prev_pos, pos, interpolated_delta_time)),
-		base.ivec2{128, 128},
+		base.ivec2{1280, 1280},
 		base.vec2{0.25, 0.25},
 		0, //app.time.time * 32,
 		&car_mat,
