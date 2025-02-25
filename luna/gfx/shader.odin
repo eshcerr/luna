@@ -28,7 +28,6 @@ layout (std430, binding = 0) buffer batch_sbo {
 
 uniform mat4 orthographic_projection;
 
-
 layout (location = 0) out vec2 uv;
 layout (location = 1) out flat uint material_id;
 layout (location = 2) out vec2 world_position;
@@ -93,11 +92,17 @@ void main()
     gl_Position = orthographic_projection * vec4(vertex_pos, 0.0, 1.0);
     uv = uv_array[gl_VertexID];
 	material_id = item.material_id;
-	world_position = gl_Position.xy;
+	world_position = vertex_pos.xy;
 `
 
 
 GLSL_FRAGMENT_SHADER :: `
+struct point_light_t {
+    vec3 color;
+    ivec2 position;
+    float intensity;
+};
+
 struct material_t {
 	vec4 color;
 };
@@ -113,6 +118,17 @@ layout (location = 2) in vec2 world_position;
 layout (location = 0) out vec4 frag_color;
 
 layout (binding = 0) uniform sampler2D texture_atlas;
+layout (binding = 1) uniform sampler2D normal_map;
+uniform vec3 global_light_color;
+uniform mat4 orthographic_projection;
+uniform point_light_t light;
+
+vec3 calculate_lights() {
+    float distance = length(world_position - light.position);
+    float attenuation = light.intensity / (1.0 + 0.25 * distance + 0.075 * distance * distance);
+    vec3 color = clamp(light.color * light.intensity * attenuation, 0.0, 1.0);
+    return color;// + global_light_color;
+}
 
 void main()
 {
@@ -123,7 +139,7 @@ void main()
 
 GLSL_SPRITE_FRAGMENT_SHADER :: `
     if (tex_color.a == 0.0) { discard; }
-    frag_color = tex_color * material.color;
+    frag_color = tex_color * material.color * vec4(calculate_lights().xyz, 1);
 `
 
 

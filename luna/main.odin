@@ -186,10 +186,8 @@ draw :: proc(app: ^application_t, interpolated_delta_time: f32) {
 		font_batch,
 		"yeeeet !!\nthis is a mother fucking text !",
 		font,
-		base.ivec2{10, 100},
+		base.ivec2{100, 100},
         base.vec2{1, 1},
-		0,
-		nil,
 	)
 
 	gfx.renderer_draw_batch(renderer, font_batch)

@@ -17,19 +17,18 @@ camera_t :: struct {
 
 // TODO : implement camera zoom
 camera_projection :: proc(camera: ^camera_t) -> base.mat4 {
-
 	translate, rotate, ortho: base.mat4
 	translate = linalg.matrix4_translate_f32({camera.position.x, camera.position.y, 0})
 	rotate = linalg.matrix4_rotate_f32(math.to_radians_f32(camera.rotation), {0, 0, 1})
 
-	ortho = linalg.matrix_ortho3d_f32(
-		camera.position.x - camera.dimentions.x / 2.0,
-		camera.position.x + camera.dimentions.x / 2.0,
-		camera.position.y - camera.dimentions.y / 2.0,
-		camera.position.y + camera.dimentions.y / 2.0,
-		1,
-		-1,
-	)
+    ortho = linalg.matrix_ortho3d_f32(
+	    camera.position.x - camera.dimentions.x / 2.0,
+	    camera.position.x + camera.dimentions.x / 2.0,
+	    camera.position.y - camera.dimentions.y / 2.0,
+	    camera.position.y + camera.dimentions.y / 2.0,
+	    1,
+	    -1,
+    )
 
 	ortho = linalg.mul(ortho, translate)
 	ortho = linalg.mul(ortho, rotate)
