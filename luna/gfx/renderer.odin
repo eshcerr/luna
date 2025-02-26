@@ -2,14 +2,18 @@ package luna_gfx
 
 import "../base"
 
-import "core:strings"
 import "core:math"
+import "core:strings"
 import gl "vendor:OpenGL"
 
 renderer_t :: struct {
-	vao, transform_sbo, material_sbo: u32,
-	current_camera:                   ^camera_t,
-	camera_proj:                      base.mat4,
+	vao, transform_sbo, material_sbo:  u32,
+	point_lights_sbo, spot_lights_sbo: u32,
+	global_light:                      ^global_light_t,
+	current_camera:                    ^camera_t,
+	camera_proj:                       base.mat4,
+	point_lights:                      [dynamic]point_light_t,
+	spot_lights:                       [dynamic]spot_light_t,
 }
 
 renderer_init :: proc() -> ^renderer_t {
@@ -34,6 +38,14 @@ renderer_init :: proc() -> ^renderer_t {
 		nil,
 		gl.DYNAMIC_DRAW,
 	)
+
+	gl.GenBuffers(1, &renderer.point_lights_sbo)
+	gl.BindBufferBase(gl.SHADER_STORAGE_BUFFER, 1, renderer.point_lights_sbo)
+	gl.BufferData(gl.SHADER_STORAGE_BUFFER, size_of(point_light_t) * 64, nil, gl.DYNAMIC_DRAW)
+
+	gl.GenBuffers(1, &renderer.spot_lights_sbo)
+	gl.BindBufferBase(gl.SHADER_STORAGE_BUFFER, 1, renderer.spot_lights_sbo)
+	gl.BufferData(gl.SHADER_STORAGE_BUFFER, size_of(spot_light_t) * 32, nil, gl.DYNAMIC_DRAW)
 
 	gl.Enable(gl.DEPTH_TEST)
 	gl.DepthFunc(gl.GREATER)
@@ -76,15 +88,37 @@ renderer_use_shader :: proc(renderer: ^renderer_t, shader: ^shader_t) {
 		&renderer.camera_proj[0][0],
 	)
 
-    light:= spot_light_t{color = {1, 0.3, 0.7}, position = {0, 0}, intensity = 10, direction = {1, -1.5}, cutoff = 20, smooth_cutoff = 30}
-    glc:= base.vec3{0.5, 0.5, 0.5}
-    gl.Uniform3fv(gl.GetUniformLocation(shader.program, "global_light_color"), 1, &glc[0])
-    gl.Uniform3fv(gl.GetUniformLocation(shader.program, "light.color"), 1, &light.color[0])
-    gl.Uniform2iv(gl.GetUniformLocation(shader.program, "light.position"), 1, &light.position[0])
-    gl.Uniform2fv(gl.GetUniformLocation(shader.program, "light.direction"), 1, &light.direction[0])
-    gl.Uniform1f(gl.GetUniformLocation(shader.program, "light.intensity"), light.intensity)
-    gl.Uniform1f(gl.GetUniformLocation(shader.program, "light.cutoff"), light.cutoff)
-    gl.Uniform1f(gl.GetUniformLocation(shader.program, "light.smooth_cutoff"), light.smooth_cutoff)
+	// global light
+	gl.Uniform3fv(
+		gl.GetUniformLocation(shader.program, "global_light_color"),
+		1,
+		&renderer.global_light.color[0],
+	)
+
+	gl.BindBufferBase(gl.SHADER_STORAGE_BUFFER, 1, renderer.point_lights_sbo)
+	gl.BufferSubData(
+		gl.SHADER_STORAGE_BUFFER,
+		0,
+		size_of(point_light_t) * len(renderer.point_lights),
+		&raw_data(renderer.point_lights)[0],
+	)
+	gl.Uniform1i(
+		gl.GetUniformLocation(shader.program, "point_light_count"),
+		i32(len(renderer.point_lights)),
+	)
+
+	gl.BindBufferBase(gl.SHADER_STORAGE_BUFFER, 2, renderer.spot_lights_sbo)
+	gl.BufferSubData(
+		gl.SHADER_STORAGE_BUFFER,
+		0,
+		size_of(spot_light_t) * len(renderer.spot_lights),
+		&raw_data(renderer.spot_lights)[0],
+	)
+	gl.Uniform1i(
+		gl.GetUniformLocation(shader.program, "spot_light_count"),
+		i32(len(renderer.spot_lights)),
+	)
+
 }
 
 renderer_draw_batch :: proc(renderer: ^renderer_t, batch: ^batch_t) {
@@ -97,14 +131,6 @@ renderer_draw_batch :: proc(renderer: ^renderer_t, batch: ^batch_t) {
 		0,
 		size_of(batch_item_t) * len(batch.items),
 		&raw_data(batch.items)[0],
-	)
-
-	gl.BindBufferBase(gl.SHADER_STORAGE_BUFFER, 1, renderer.material_sbo)
-	gl.BufferSubData(
-		gl.SHADER_STORAGE_BUFFER,
-		0,
-		size_of(material_t) * len(batch.materials),
-		&raw_data(batch.materials)[0],
 	)
 
 	gl.DrawArraysInstanced(gl.TRIANGLES, 0, 6, i32(len(batch.items)))
