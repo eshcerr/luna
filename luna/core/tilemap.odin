@@ -5,7 +5,8 @@ import "../base"
 // bitmask here
 //https://code.tutsplus.com/how-to-use-tile-bitmasking-to-auto-tile-your-level-layouts--cms-25673t
 tile_t :: struct {
-	neighbours_mask: u32,
+	id:              u32,
+	neighbours_mask: u8,
 	is_visible:      bool,
 }
 
@@ -21,10 +22,10 @@ tilemap_init :: proc(grid_size, tile_size: base.ivec2) -> tilemap_t {
 	tilemap.tile_size = tile_size
 
 	tilemap.data = make([][]tile_t, grid_size.x)
-	for i in 0..<grid_size.x {
+	for i in 0 ..< grid_size.x {
 		tilemap.data[i] = make([]tile_t, grid_size.y)
 	}
-    return tilemap
+	return tilemap
 }
 
 tilemap_deinit :: proc(tilemap: ^tilemap_t) {
