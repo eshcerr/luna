@@ -1,5 +1,8 @@
 package luna_ui
 
+// clay dev explaination, maybe the better thing to implement
+// https://www.youtube.com/watch?v=by9lQvpvMIc
+
 import "../base"
 import "../core"
 import "../gfx"
