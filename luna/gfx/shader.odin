@@ -149,19 +149,6 @@ layout (binding = 1) uniform sampler2D normal_map;
 uniform vec3 global_light_color;
 uniform mat4 orthographic_projection;
 
-vec3 calculate_lights() {
-	vec3 color = vec3(0, 0, 0);
-
-	for (int i = 0; i < point_light_count; i++) {
-		color += calculate_point_light(point_lights[i]);
-	}
-
-	for (int i = 0; i < spot_light_count; i++) {
-		color += calculate_spot_light(spot_lights[i]);
-	}
-
-	return global_light_color + color;
-}
 
 vec3 calculate_point_light(struct point_light_t light) {
 	float distance = length(world_position - light.position);
@@ -181,6 +168,21 @@ vec3 calculate_spot_light(struct spot_light_t light) {
 	}
 
     return vec3(0, 0, 0);
+}
+	
+vec3 calculate_lights() {
+//	vec3 color = vec3(0, 0, 0);
+//
+//	for (int i = 0; i < point_light_count; i++) {
+//		color += calculate_point_light(point_lights[i]);
+//	}
+//
+//	for (int i = 0; i < spot_light_count; i++) {
+//		color += calculate_spot_light(spot_lights[i]);
+//	}
+//
+//	return global_light_color + color;
+	return global_light_color;
 }
 
 void main()
@@ -239,7 +241,10 @@ shader_init_and_generate :: proc(file_path: string, shader_type: shader_type_e) 
 		fragment_source,
 		gl.Shader_Type.FRAGMENT_SHADER,
 	)
-	assert(fragment_compile_ok, "failed to compile vertex shader sources")
+	assert(fragment_compile_ok, "failed to compile fragment shader sources")
+
+	os.write_entire_file(strings.concatenate({file_path, ".vert"}), transmute([]u8) vertex_source)
+	os.write_entire_file(strings.concatenate({file_path, ".frag"}), transmute([]u8) fragment_source)
 
 	program, program_link_ok := gl.create_and_link_program({vertex, fragment})
 	assert(program_link_ok, "failed to link shader program")

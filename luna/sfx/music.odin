@@ -35,7 +35,7 @@ music_init :: proc(path: string, play_mode: music_play_mode_e, audio: ^audio_t) 
 	al.sourcef(
 		music.source,
 		al.GAIN,
-		audio.volumes[.GENERAL] * audio.volumes[.MUSIC] * music.volume,
+		audio.volumes[.GLOBAL] * audio.volumes[.MUSIC] * music.volume,
 	)
 
 	err: os.Error
@@ -59,7 +59,7 @@ music_deinit :: proc(music: ^music_t, audio: ^audio_t) {
 
 music_set_volume :: proc(music: ^music_t, audio: ^audio_t, volume: f32) {
 	music.volume = volume
-	al.sourcef(music.source, al.GAIN, audio.volumes[.GENERAL] * audio.volumes[.MUSIC] * volume)
+	al.sourcef(music.source, al.GAIN, audio.volumes[.GLOBAL] * audio.volumes[.MUSIC] * volume)
 }
 
 music_play :: proc(music: ^music_t) {

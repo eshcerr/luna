@@ -37,7 +37,7 @@ sound_init :: proc(path: string, audio: ^audio_t) -> ^sound_t {
 	al.sourcef(
 		sound.source,
 		al.GAIN,
-		audio.volumes[.GENERAL] * audio.volumes[.SOUND] * sound.volume,
+		audio.volumes[.GLOBAL] * audio.volumes[.SOUND] * sound.volume,
 	)
 
 	sound.index, _ = append_elem(&audio.sounds, sound)
@@ -55,7 +55,7 @@ sound_deinit :: proc(sound: ^sound_t, audio: ^audio_t) {
 
 sound_set_volume :: proc(sound: ^sound_t, audio: ^audio_t, volume: f32) {
 	sound.volume = volume
-	al.sourcef(sound.source, al.GAIN, audio.volumes[.GENERAL] * audio.volumes[.SOUND] * volume)
+	al.sourcef(sound.source, al.GAIN, audio.volumes[.GLOBAL] * audio.volumes[.SOUND] * volume)
 }
 
 sound_play :: proc(sound: ^sound_t) {

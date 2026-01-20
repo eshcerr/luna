@@ -17,17 +17,24 @@ application_t :: struct {
 	title:    string,
 	time:     application_time_t,
 	pipeline: ^application_pipeline_t,
+	input:    ^core.input_t,
 	data:     ^any,
 }
 
 application_time_t :: struct {
-	update_per_second, time, delta_time, fixed_delta_time, interpolated_delta_time, current_frame, last_frame: f32,
+	update_per_second,
+	time,
+	delta_time,
+	fixed_delta_time,
+	interpolated_delta_time,
+	current_frame,
+	last_frame: f32,
 }
 
 application_pipeline_t :: struct {
 	callbacks:  ^application_callbacks_t,
-	asset_pip:  ^assets.asset_pipeline_t,
-	render_pip: ^gfx.render_pipeline_t,
+	asset:  ^assets.asset_pipeline_t,
+	render: ^gfx.render_pipeline_t,
 }
 
 application_callbacks_t :: struct {
@@ -45,8 +52,8 @@ app_run :: proc(app: ^application_t) {
 	}
 	app.time.fixed_delta_time = 1.0 / app.time.update_per_second
 
-	gfx.pip = app.pipeline.render_pip
-	assets.pip = app.pipeline.asset_pip
+	gfx.pip = app.pipeline.render
+	assets.pip = app.pipeline.asset
 
 	app_setup(app)
 	app_init(app)
@@ -94,7 +101,7 @@ app_init :: proc(app: ^application_t) {
 	sfx.audio = sfx.audio_init()
 	core.inputs_fill_lookup_tables()
 
-	// TODO : move to input init 
+	// TODO : move to input init
 	glfw.SetKeyCallback(gfx.pip.window_handle.(glfw.WindowHandle), core.inputs_listen_to_glfw_keys)
 	glfw.SetMouseButtonCallback(
 		gfx.pip.window_handle.(glfw.WindowHandle),

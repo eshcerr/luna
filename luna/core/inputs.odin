@@ -11,6 +11,9 @@ import "core:math"
 import "core:math/linalg"
 import "vendor:glfw"
 
+INPUT_MAXIMUM_BUTTONS_PER_ACTION :: 4
+GAMEPAD_AXIS_DEADZONE :: 0.1
+
 keycode_e :: enum {
 	KEY_A,
 	KEY_B,
@@ -184,8 +187,6 @@ input_t :: struct {
     input_mapping: input_mapping_t
 }
 
-INPUT_MAXIMUM_BUTTONS_PER_ACTION :: 4
-
 input_actions_e :: enum {
     MOVE_LEFT,
     MOVE_RIGHT,
@@ -247,7 +248,6 @@ inputs_update_mouse :: proc(window: glfw.WindowHandle) {
 	input.mouse.delta = input.mouse.prev_mouse_pos - input.mouse.mouse_pos
 }
 
-GAMEPAD_AXIS_DEADZONE :: 0.1
 
 inputs_update_gamepad :: proc() {
 	if glfw.JoystickPresent(0) && glfw.JoystickIsGamepad(0) {
@@ -301,18 +301,34 @@ inputs_pressed :: proc {
 	inputs_key_pressed,
 	inputs_mouse_button_pressed,
 	inputs_gamepad_button_pressed,
+	inputs_action_pressed,
 }
 
 inputs_released :: proc {
 	inputs_key_released,
 	inputs_mouse_button_released,
 	inputs_gamepad_button_released,
+	inputs_action_released,
 }
 
 inputs_down :: proc {
 	inputs_key_down,
 	inputs_mouse_button_down,
 	inputs_gamepad_button_down,
+	inputs_action_down,
+}
+
+
+inputs_key_pressed :: proc(keycode: keycode_e) -> bool {
+	return input.keyboard.keys[keycode].just_pressed
+}
+
+inputs_key_released :: proc(keycode: keycode_e) -> bool {
+	return input.keyboard.keys[keycode].just_released
+}
+
+inputs_key_down :: proc(keycode: keycode_e) -> bool {
+	return input.keyboard.keys[keycode].is_down
 }
 
 inputs_action_down :: proc(action_map: ^input_mapping_t, action_id: i32) -> bool {
@@ -324,6 +340,19 @@ inputs_action_down :: proc(action_map: ^input_mapping_t, action_id: i32) -> bool
     return false
 }
 
+
+inputs_mouse_button_pressed :: proc(mouse_button: mouse_buttons_e) -> bool {
+	return input.mouse.buttons[mouse_button].just_pressed
+}
+
+inputs_mouse_button_released :: proc(mouse_button: mouse_buttons_e) -> bool {
+	return input.mouse.buttons[mouse_button].just_released
+}
+
+inputs_mouse_button_down :: proc(mouse_button: mouse_buttons_e) -> bool {
+	return input.mouse.buttons[mouse_button].is_down
+}
+
 inputs_action_pressed :: proc(action_map: ^input_mapping_t, action_id: i32) -> bool {
     action, ok := action_map.actions[action_id]
     assert(ok, "unregistered action: ")
@@ -333,6 +362,19 @@ inputs_action_pressed :: proc(action_map: ^input_mapping_t, action_id: i32) -> b
     return false
 }
 
+
+inputs_gamepad_button_pressed :: proc(gamepad_button: gamepad_buttons_e) -> bool {
+	return input.gamepad.buttons[gamepad_button].just_pressed
+}
+
+inputs_gamepad_button_released :: proc(gamepad_button: gamepad_buttons_e) -> bool {
+	return input.gamepad.buttons[gamepad_button].just_released
+}
+
+inputs_gamepad_button_down :: proc(gamepad_button: gamepad_buttons_e) -> bool {
+	return input.gamepad.buttons[gamepad_button].is_down
+}
+
 inputs_action_released :: proc(action_map: ^input_mapping_t, action_id: i32) -> bool {
     action, ok := action_map.actions[action_id]
     assert(ok, "unregistered action: ")
@@ -340,44 +382,6 @@ inputs_action_released :: proc(action_map: ^input_mapping_t, action_id: i32) -> 
         if button.just_released {return true}
     }
     return false
-}
-
-inputs_key_pressed :: proc(keycode: keycode_e) -> bool {
-	return input.keyboard.keys[keycode].just_pressed
-}
-
-inputs_mouse_button_pressed :: proc(mouse_button: mouse_buttons_e) -> bool {
-	return input.mouse.buttons[mouse_button].just_pressed
-}
-
-inputs_gamepad_button_pressed :: proc(gamepad_button: gamepad_buttons_e) -> bool {
-	return input.gamepad.buttons[gamepad_button].just_pressed
-}
-
-
-inputs_key_released :: proc(keycode: keycode_e) -> bool {
-	return input.keyboard.keys[keycode].just_released
-}
-
-inputs_mouse_button_released :: proc(mouse_button: mouse_buttons_e) -> bool {
-	return input.mouse.buttons[mouse_button].just_released
-}
-
-inputs_gamepad_button_released :: proc(gamepad_button: gamepad_buttons_e) -> bool {
-	return input.gamepad.buttons[gamepad_button].just_released
-}
-
-
-inputs_key_down :: proc(keycode: keycode_e) -> bool {
-	return input.keyboard.keys[keycode].is_down
-}
-
-inputs_mouse_button_down :: proc(mouse_button: mouse_buttons_e) -> bool {
-	return input.mouse.buttons[mouse_button].is_down
-}
-
-inputs_gamepad_button_down :: proc(gamepad_button: gamepad_buttons_e) -> bool {
-	return input.gamepad.buttons[gamepad_button].is_down
 }
 
 

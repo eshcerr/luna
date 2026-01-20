@@ -1,6 +1,7 @@
 //#+feature dynamic-literals
 package luna 
 
+import "core:log"
 import "assets"
 import "base"
 import "core"
@@ -12,7 +13,6 @@ import "core:math"
 
 
 main :: proc() {
-
 	pipeline := new(application_pipeline_t)
 
 	pipeline.callbacks =
@@ -25,18 +25,18 @@ main :: proc() {
 		deinit_cb = deinit,
 	}
 
-	pipeline.render_pip =
+	pipeline.render =
 	&{
 		window_provider = gfx.window_provider_e.GLFW,
 		backend = gfx.supported_backend_e.OPENGL,
 		view_mode = gfx.view_mode_e.TWO_D,
-		clear_color = base.COLOR_CRIMSON,
+		clear_color = base.COLOR_CORNFLOWER_BLUE,
 		game_camera = {position = base.vec2{160, -90}, dimentions = base.vec2{320, 180}, zoom = 1},
 		ui_camera = {position = base.vec2{160, -90}, dimentions = base.vec2{320, 180}, zoom = 1},
 		window_size = {base.DEFAULT_WINDOW_WIDTH, base.DEFAULT_WINDOW_HEIGHT},
 	}
 
-	pipeline.asset_pip =
+	pipeline.asset =
 	&{
 		paths = {
 			.IMAGE = "assets/images/",
@@ -73,16 +73,17 @@ car_mat: gfx.material_t
 setup :: proc(app: ^application_t) {}
 
 init :: proc(app: ^application_t) {
-	sfx.audio_set_volume(sfx.audio, .GENERAL, 0.1)
+	sfx.audio_set_volume(sfx.audio, .GLOBAL, 0.1)
 	wiwiwi_sound = sfx.sound_init(assets.get_path(.SFX, "wiwiwi.wav"), sfx.audio)
 	rat_dance_music = sfx.music_init(
 		assets.get_path(.SFX, "rat_dance_meme.wav"),
-		.SINGLE,
+		.LOOP,
 		sfx.audio,
 	)
 
-
 	renderer = gfx.renderer_init()
+	renderer.global_light.color = base.COLOR_PURPLE.rgb
+	
 	gfx.renderer_use_camera(renderer, &gfx.pip.game_camera)
 
 	shader = gfx.shader_init(
@@ -90,16 +91,14 @@ init :: proc(app: ^application_t) {
 		gfx.shader_type_e.SPRITE,
 	)
 
-
 	font_shader = gfx.shader_init(
 		assets.get_path(.SHADER, "test_no_tokens.glsl"),
 		gfx.shader_type_e.FONT,
 	)
 
-	car_mat = {
+	car_mat = gfx.material_t{
 		color = {1, 1, 1, 1},
 	}
-
 
 	font = gfx.font_bake(
 		assets.get_path(.FONT, "essential.ttf"),
@@ -143,7 +142,6 @@ update :: proc(app: ^application_t, delta_time: f32) {
 fixed_update :: proc(app: ^application_t, fixed_delta_time: f32) {
 	prev_pos = pos
 
-
 	if core.inputs_key_down(.KEY_D) {pos.x += 100.0 * fixed_delta_time}
 	if core.inputs_key_down(.KEY_A) {pos.x -= 100.0 * fixed_delta_time}
 	if core.inputs_key_down(.KEY_W) {pos.y += 100.0 * fixed_delta_time}
@@ -157,6 +155,9 @@ fixed_update :: proc(app: ^application_t, fixed_delta_time: f32) {
 	if core.inputs_key_down(.KEY_DOWN) {gfx.pip.game_camera.position.y -= 100.0 * fixed_delta_time}
 	if core.inputs_key_down(.KEY_U) {gfx.pip.game_camera.rotation += 100.0 * fixed_delta_time}
 	if core.inputs_key_down(.KEY_I) {gfx.pip.game_camera.rotation -= 100.0 * fixed_delta_time}
+
+	//fmt.println(gfx.pip.game_camera.position);
+	//fmt.println(pos, "\n");
 
 	if core.inputs_key_pressed(.KEY_P) {
 		sfx.sound_play(wiwiwi_sound)
@@ -199,11 +200,10 @@ draw :: proc(app: ^application_t, interpolated_delta_time: f32) {
 		sprite_batch,
 		0,
 		base.vec2_to_ivec2(math.lerp(prev_pos, pos, interpolated_delta_time)),
-		base.ivec2{1280, 1280},
-		base.vec2{0.25, 0.25},
-		0, //app.time.time * 32,
-		&car_mat,
+		base.ivec2{360, 360},
+		base.vec2{1, 1},
 	)
+	
 
 	gfx.renderer_draw_batch(renderer, sprite_batch)
 }

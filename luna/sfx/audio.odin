@@ -22,7 +22,7 @@ audio_t :: struct {
 audio: ^audio_t
 
 audio_volume_type_e :: enum {
-	GENERAL,
+	GLOBAL,
 	SOUND,
 	MUSIC,
 }
@@ -35,7 +35,7 @@ audio_init :: proc() -> ^audio_t {
 	audio.ctx = alc.create_context(audio.device, nil)
 	alc.make_context_current(audio.ctx)
 
-	audio.volumes[.GENERAL] = 0.5
+	audio.volumes[.GLOBAL] = 0.5
 	audio.volumes[.SOUND] = 0.5
 	audio.volumes[.MUSIC] = 0.5
 	return audio
@@ -64,16 +64,16 @@ audio_set_volume :: proc(audio: ^audio_t, audio_volume_type: audio_volume_type_e
 	switch audio_volume_type {
 	case .SOUND:
 		for sound in audio.sounds {
-			al.sourcef(sound.source, al.GAIN, audio.volumes[.GENERAL] * audio.volumes[.SOUND])
+			al.sourcef(sound.source, al.GAIN, audio.volumes[.GLOBAL] * audio.volumes[.SOUND])
 		}
 	case .MUSIC:
 		audio_set_musics_volume(audio, volume)
 
-	case .GENERAL:
+	case .GLOBAL:
 		{
-			// General volume for both SOUND and MUSIC
+			// Global volume for both SOUND and MUSIC
 			for sound in audio.sounds {
-				al.sourcef(sound.source, al.GAIN, audio.volumes[.GENERAL] * audio.volumes[.SOUND])
+				al.sourcef(sound.source, al.GAIN, audio.volumes[.GLOBAL] * audio.volumes[.SOUND])
 			}
 			audio_set_musics_volume(audio, volume)
 		}
@@ -82,7 +82,7 @@ audio_set_volume :: proc(audio: ^audio_t, audio_volume_type: audio_volume_type_e
 
 audio_set_musics_volume :: proc(audio: ^audio_t, volume: f32) {
 	for music in audio.musics {
-		al.sourcef(music.source, al.GAIN, audio.volumes[.GENERAL] * audio.volumes[.MUSIC])
+		al.sourcef(music.source, al.GAIN, audio.volumes[.GLOBAL] * audio.volumes[.MUSIC])
 	}
 }
 

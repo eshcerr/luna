@@ -1,8 +1,8 @@
 package luna_gfx
 
 import "../base"
+import "core:fmt"
 
-import "core:math"
 import "core:strings"
 import gl "vendor:OpenGL"
 
@@ -55,6 +55,10 @@ renderer_init :: proc() -> ^renderer_t {
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 
 	gl.ActiveTexture(gl.TEXTURE0) // only one texture at the time for now
+
+	renderer.global_light = new(global_light_t)
+	renderer.global_light.color = base.COLOR_WHITE.rbg
+
 	return renderer
 }
 
@@ -62,6 +66,7 @@ renderer_deinit :: proc(renderer: ^renderer_t) {
 	gl.DeleteVertexArrays(1, &renderer.vao)
 	gl.DeleteBuffers(1, &renderer.transform_sbo)
 	gl.DeleteBuffers(1, &renderer.material_sbo)
+	free(renderer.global_light)
 	free(renderer)
 }
 
@@ -131,6 +136,14 @@ renderer_draw_batch :: proc(renderer: ^renderer_t, batch: ^batch_t) {
 		0,
 		size_of(batch_item_t) * len(batch.items),
 		&raw_data(batch.items)[0],
+	)
+
+	gl.BindBufferBase(gl.SHADER_STORAGE_BUFFER, 1, renderer.material_sbo)
+	gl.BufferSubData(
+		gl.SHADER_STORAGE_BUFFER,
+		0,
+		size_of(material_t) * len(batch.materials),
+		&raw_data(batch.materials)[0],
 	)
 
 	gl.DrawArraysInstanced(gl.TRIANGLES, 0, 6, i32(len(batch.items)))

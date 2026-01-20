@@ -17,17 +17,17 @@ tilemap_t :: struct {
 	tile_size: base.ivec2,
 }
 
-tilemap_init :: proc(grid_size, tile_size, position: base.ivec2) -> ^tilemap_t {
-	tilemap: new(tilemap_t)
-	tilemap.grid_size = grid_size
-	tilemap.tile_size = tile_size
-
-	tilemap.data = make([][]tile_t, grid_size.x)
-	for i in 0 ..< grid_size.x {
-		tilemap.data[i] = make([]tile_t, grid_size.y)
-	}
-	return tilemap
-}
+//tilemap_init :: proc(grid_size, tile_size, position: base.ivec2) -> ^tilemap_t {
+//	tilemap: new(tilemap_t)
+//	tilemap.grid_size = grid_size
+//	tilemap.tile_size = tile_size
+//
+//	tilemap.data = make([][]tile_t, grid_size.x)
+//	for i in 0 ..< grid_size.x {
+//		tilemap.data[i] = make([]tile_t, grid_size.y)
+//	}
+//	return tilemap
+//}
 
 tilemap_deinit :: proc(tilemap: ^tilemap_t) {
 	for &row in tilemap.data {

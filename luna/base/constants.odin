@@ -6,6 +6,13 @@ KB :: 1024
 MB :: 1024 * 1024
 GB :: 1024 * 1024 * 1024
 
+VEC2_UP :: vec2{1.0, 0.0}
+VEC2_DOWN :: vec2{-1.0, 0.0}
+VEC2_LEFT :: vec2{0.0, -1.0}
+VEC2_RIGHT :: vec2{0.0, 1.0}
+VEC2_ONE :: vec2{1.0, 1.0}
+VEC2_ZERO :: vec2{0.0, 0.0}
+
 VEC3_FORWARD :: vec3{1.0, 0.0, 0.0}
 VEC3_BACKWARD :: vec3{-1.0, 0.0, 0.0}
 VEC3_RIGHT :: vec3{0.0, 1.0, 0.0}
@@ -13,6 +20,7 @@ VEC3_LEFT :: vec3{0.0, -1.0, 0.0}
 VEC3_UP :: vec3{0.0, 0.0, 1.0}
 VEC3_DOWN :: vec3{0.0, 0.0, -1.0}
 VEC3_ONE :: vec3{1.0, 1.0, 1.0}
+VEC3_ZERO :: vec3{0.0, 0.0, 0.0}
 
 COLOR_TRANSPARENT :: vec4{0.0, 0.0, 0.0, 0.0}
 COLOR_RED :: vec4{1.0, 0.0, 0.0, 1.0}
@@ -56,21 +64,20 @@ COLOR_SKY_BLUE :: vec4{0.53, 0.81, 0.92, 1.0}
 COLOR_SOFT_GRAY :: vec4{0.85, 0.70, 0.75, 1.0}
 COLOR_CORNFLOWER_BLUE :: vec4{0.392, 0.584, 0.929, 1.0}
 
-log_info :: proc (args: ..any) {
-    fmt.print("[INFO] ")
-    fmt.println(..args)
+log_info :: proc(args: ..any) {
+	fmt.print("[INFO] ")
+	fmt.println(..args)
 }
 
-log_warn :: proc (args: ..any) {
-    fmt.print("[WARN] ")
-    fmt.println(..args)
+log_warn :: proc(args: ..any) {
+	fmt.print("[WARN] ")
+	fmt.println(..args)
 }
 
-log_error :: proc (args: ..any) {
-    fmt.print("[ERROR] ")
-    fmt.println(..args)
+log_error :: proc(args: ..any) {
+	fmt.print("[ERROR] ")
+	fmt.println(..args)
 }
 
 DEFAULT_WINDOW_WIDTH :: 1280
 DEFAULT_WINDOW_HEIGHT :: 720
-

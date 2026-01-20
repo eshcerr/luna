@@ -25,6 +25,7 @@ collision_aabb_to_aabb :: proc(a: base.aabb, b: base.aabb) -> (bool, base.vec2) 
 
 	return true, penetration
 }
+
 collision_aabb_to_circle :: proc(a: base.aabb, c: base.circle) -> (bool, base.vec2) {
 	using base
 
@@ -131,12 +132,7 @@ collision_aabb_to_polygon :: proc(a: base.aabb, poly: []base.vec2) -> (bool, bas
 	using base
 
 	// Convert AABB to a polygon
-	aabb_poly := []vec2 {
-		{a.x, a.y},
-		{a.z, a.y},
-		{a.z, a.w},
-		{a.x, a.w},
-	}
+	aabb_poly := []vec2{{a.x, a.y}, {a.z, a.y}, {a.z, a.w}, {a.x, a.w}}
 
 	// Use SAT to check for collision
 	collided, penetration := collision_polygon_to_polygon(aabb_poly, poly)
@@ -245,5 +241,29 @@ compute_polygon_center :: proc(poly: []base.vec2) -> base.vec2 {
 }
 
 iaabb_contains :: proc(iaabb: base.iaabb, point: base.ivec2) -> bool {
-    return point.x < iaabb.x || point.x > iaabb.x + iaabb.z || point.y < iaabb.y || point.y > iaabb.y + iaabb.w
+	return(
+		point.x < iaabb.x ||
+		point.x > iaabb.x + iaabb.z ||
+		point.y < iaabb.y ||
+		point.y > iaabb.y + iaabb.w \
+	)
+}
+
+resolve_aabb_to_aabb :: proc {
+	collision_aabb_to_aabb
+}
+
+check_aabb_to_aabb :: proc {
+	overlap_aabb_to_aabb,
+	overlap_iaabb_to_iaabb
+}
+
+@(private = "file")
+overlap_aabb_to_aabb :: proc(a: base.aabb, b: base.aabb) -> bool {
+	return b.x >= a.x + a.z || b.x + b.z <= a.x || b.y >= a.y + a.w || b.y + b.w <= a.y
+}
+
+@(private = "file")
+overlap_iaabb_to_iaabb :: proc(a: base.iaabb, b: base.iaabb) -> bool {
+	return b.x >= a.x + a.z || b.x + b.z <= a.x || b.y >= a.y + a.w || b.y + b.w <= a.y
 }
