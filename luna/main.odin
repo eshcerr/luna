@@ -7,6 +7,7 @@ import "base"
 import "core"
 import "gfx"
 import "sfx"
+import "core/physics"
 
 import "core:fmt"
 import "core:math"
@@ -63,12 +64,21 @@ font: ^gfx.font_t
 car_sprite: ^gfx.sprite_t
 car_atlas: ^gfx.atlas_t
 
+esh_sprite: ^gfx.sprite_t
+esh_atlas: ^gfx.atlas_t
+esh_sprite_batch: ^gfx.batch_t
+
+
 font_sprite: ^gfx.sprite_t
 font_atlas: ^gfx.atlas_t
 
 shader: ^gfx.shader_t
 font_shader: ^gfx.shader_t
 car_mat: gfx.material_t
+
+physics_world: ^physics.world_t
+esh_actor: ^physics.actor_t
+ground_solid: ^physics.solid_t
 
 setup :: proc(app: ^application_t) {}
 
@@ -82,7 +92,7 @@ init :: proc(app: ^application_t) {
 	)
 
 	renderer = gfx.renderer_init()
-	renderer.global_light.color = base.COLOR_PURPLE.rgb
+	renderer.global_light.color = base.COLOR_WHITE.rgb
 	
 	gfx.renderer_use_camera(renderer, &gfx.pip.game_camera)
 
@@ -95,10 +105,6 @@ init :: proc(app: ^application_t) {
 		assets.get_path(.SHADER, "test_no_tokens.glsl"),
 		gfx.shader_type_e.FONT,
 	)
-
-	car_mat = gfx.material_t{
-		color = {1, 1, 1, 1},
-	}
 
 	font = gfx.font_bake(
 		assets.get_path(.FONT, "essential.ttf"),
@@ -116,8 +122,18 @@ init :: proc(app: ^application_t) {
 		{0 = base.iaabb{0, 0, car_sprite.width, car_sprite.height}},
 	)
 
+	esh_sprite = gfx.sprite_from_png(assets.get_path(.IMAGE, "silksong_scared_esh.png"))
+	esh_atlas = gfx.atlas_init(
+		esh_sprite,
+		{0 = base.iaabb{0, 0, esh_sprite.width, esh_sprite.height}},
+	)
+	fmt.println(esh_sprite.width, "|", esh_sprite.width)
+
 	sprite_batch = gfx.batch_init(car_atlas, .SPRITE)
+	esh_sprite_batch = gfx.batch_init(esh_atlas, .SPRITE)
 	font_batch = gfx.batch_init(font_atlas, .FONT)
+
+	physics_world = physics.world_create()
 }
 
 deinit :: proc(app: ^application_t) {
@@ -126,6 +142,7 @@ deinit :: proc(app: ^application_t) {
 
 	gfx.renderer_deinit(renderer)
 	gfx.batch_deinit(sprite_batch)
+	gfx.batch_deinit(esh_sprite_batch)
 	gfx.batch_deinit(font_batch)
 
 	gfx.shader_deinit(shader)
@@ -133,31 +150,28 @@ deinit :: proc(app: ^application_t) {
 
 	gfx.atlas_deinit(car_atlas)
 	gfx.sprite_deinit(car_sprite)
+
+	gfx.atlas_deinit(esh_atlas)
+	gfx.sprite_deinit(esh_sprite)
+
+	physics.world_deinit(physics_world)
 }
 prev_pos, pos: base.vec2
+esh_pos, esh_prev_pos : base.vec2
 
 update :: proc(app: ^application_t, delta_time: f32) {
 }
 
 fixed_update :: proc(app: ^application_t, fixed_delta_time: f32) {
 	prev_pos = pos
+	esh_prev_pos = esh_pos
 
-	if core.inputs_key_down(.KEY_D) {pos.x += 100.0 * fixed_delta_time}
-	if core.inputs_key_down(.KEY_A) {pos.x -= 100.0 * fixed_delta_time}
-	if core.inputs_key_down(.KEY_W) {pos.y += 100.0 * fixed_delta_time}
-	if core.inputs_key_down(.KEY_S) {pos.y -= 100.0 * fixed_delta_time}
+	if core.inputs_key_down(.KEY_D) {esh_pos.x += 100.0 * fixed_delta_time}
+	if core.inputs_key_down(.KEY_A) {esh_pos.x -= 100.0 * fixed_delta_time}
+	if core.inputs_key_down(.KEY_W) {esh_pos.y += 100.0 * fixed_delta_time}
+	if core.inputs_key_down(.KEY_S) {esh_pos.y -= 100.0 * fixed_delta_time}
 
-	if core.inputs_key_down(.KEY_LEFT) {gfx.pip.game_camera.position.x += 100.0 * fixed_delta_time}
-	if core.inputs_key_down(
-		.KEY_RIGHT,
-	) {gfx.pip.game_camera.position.x -= 100.0 * fixed_delta_time}
-	if core.inputs_key_down(.KEY_UP) {gfx.pip.game_camera.position.y += 100.0 * fixed_delta_time}
-	if core.inputs_key_down(.KEY_DOWN) {gfx.pip.game_camera.position.y -= 100.0 * fixed_delta_time}
-	if core.inputs_key_down(.KEY_U) {gfx.pip.game_camera.rotation += 100.0 * fixed_delta_time}
-	if core.inputs_key_down(.KEY_I) {gfx.pip.game_camera.rotation -= 100.0 * fixed_delta_time}
-
-	//fmt.println(gfx.pip.game_camera.position);
-	//fmt.println(pos, "\n");
+	fmt.println(esh_pos, "|", app.pipeline.render.game_camera.position)
 
 	if core.inputs_key_pressed(.KEY_P) {
 		sfx.sound_play(wiwiwi_sound)
@@ -174,7 +188,6 @@ fixed_update :: proc(app: ^application_t, fixed_delta_time: f32) {
 	if core.inputs_key_pressed(.KEY_B) {
 		sfx.music_reset(rat_dance_music)
 	}
-	pos += 100.0 * core.input.gamepad.left_stick * fixed_delta_time
 }
 
 draw :: proc(app: ^application_t, interpolated_delta_time: f32) {
@@ -193,17 +206,29 @@ draw :: proc(app: ^application_t, interpolated_delta_time: f32) {
 
 	gfx.renderer_draw_batch(renderer, font_batch)
 
+	// gfx.renderer_use_camera(renderer, &gfx.pip.game_camera)
+	// gfx.renderer_use_shader(renderer, shader)
+	// gfx.batch_begin(sprite_batch)
+	// gfx.batch_add(
+	// 	sprite_batch,
+	// 	0,
+	// 	base.vec2_to_ivec2(math.lerp(prev_pos, pos, interpolated_delta_time)),
+	// 	base.ivec2{360, 360},
+	// 	base.vec2{1, 1},
+	// )
+
+	// gfx.renderer_draw_batch(renderer, sprite_batch)
+	
 	gfx.renderer_use_camera(renderer, &gfx.pip.game_camera)
 	gfx.renderer_use_shader(renderer, shader)
-	gfx.batch_begin(sprite_batch)
+	gfx.batch_begin(esh_sprite_batch)
 	gfx.batch_add(
-		sprite_batch,
+		esh_sprite_batch,
 		0,
-		base.vec2_to_ivec2(math.lerp(prev_pos, pos, interpolated_delta_time)),
-		base.ivec2{360, 360},
+		base.vec2_to_ivec2(math.lerp(esh_prev_pos, esh_pos, interpolated_delta_time)),
+		base.ivec2{24, 24},
 		base.vec2{1, 1},
 	)
-	
 
-	gfx.renderer_draw_batch(renderer, sprite_batch)
+	gfx.renderer_draw_batch(renderer, esh_sprite_batch)
 }
