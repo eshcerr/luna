@@ -3,13 +3,16 @@ package luna_core
 
 import "../base"
 import "../gfx"
+import "base:runtime"
 
 import "core:c"
 import "core:fmt"
-import "core:strings"
 import "core:math"
 import "core:math/linalg"
+import "core:strings"
 import "vendor:glfw"
+
+import imgui_glfw "../../vendor/odin-imgui/imgui_impl_glfw"
 
 INPUT_MAXIMUM_BUTTONS_PER_ACTION :: 4
 GAMEPAD_AXIS_DEADZONE :: 0.1
@@ -119,7 +122,7 @@ keycode_e :: enum {
 	KEY_NUMPAD_SLASH,
 	KEY_NUMPAD_ENTER,
 	KEY_NUMPAD_DECIMAL,
-	COUNT = 255,
+	COUNT,
 }
 
 mouse_buttons_e :: enum {
@@ -180,27 +183,27 @@ gamepad_t :: struct {
 }
 
 input_t :: struct {
-	screen_size: base.ivec2,
-	mouse:       mouse_t,
-	keyboard:    keyboard_t,
-	gamepad:     gamepad_t,
-    input_mapping: input_mapping_t
+	screen_size:   base.ivec2,
+	mouse:         mouse_t,
+	keyboard:      keyboard_t,
+	gamepad:       gamepad_t,
+	input_mapping: input_mapping_t,
 }
 
 input_actions_e :: enum {
-    MOVE_LEFT,
-    MOVE_RIGHT,
-    MOVE_UP,
-    MOVE_DOWN,
-    JUMP,
+	MOVE_LEFT,
+	MOVE_RIGHT,
+	MOVE_UP,
+	MOVE_DOWN,
+	JUMP,
 }
 
 input_mapping_t :: struct {
-    actions: map[i32]input_action_t,
+	actions: map[i32]input_action_t,
 }
 
 input_action_t :: struct {
-    buttons: [INPUT_MAXIMUM_BUTTONS_PER_ACTION]^button_t,
+	buttons: [INPUT_MAXIMUM_BUTTONS_PER_ACTION]^button_t,
 }
 
 input: input_t = {}
@@ -332,12 +335,12 @@ inputs_key_down :: proc(keycode: keycode_e) -> bool {
 }
 
 inputs_action_down :: proc(action_map: ^input_mapping_t, action_id: i32) -> bool {
-    action, ok := action_map.actions[action_id]
-    assert(ok, "unregistered action: ")
-    for button in action.buttons {
-        if button.is_down {return true}
-    }
-    return false
+	action, ok := action_map.actions[action_id]
+	assert(ok, "unregistered action: ")
+	for button in action.buttons {
+		if button.is_down {return true}
+	}
+	return false
 }
 
 
@@ -354,12 +357,12 @@ inputs_mouse_button_down :: proc(mouse_button: mouse_buttons_e) -> bool {
 }
 
 inputs_action_pressed :: proc(action_map: ^input_mapping_t, action_id: i32) -> bool {
-    action, ok := action_map.actions[action_id]
-    assert(ok, "unregistered action: ")
-    for button in action.buttons {
-        if button.just_pressed {return true}
-    }
-    return false
+	action, ok := action_map.actions[action_id]
+	assert(ok, "unregistered action: ")
+	for button in action.buttons {
+		if button.just_pressed {return true}
+	}
+	return false
 }
 
 
@@ -376,14 +379,13 @@ inputs_gamepad_button_down :: proc(gamepad_button: gamepad_buttons_e) -> bool {
 }
 
 inputs_action_released :: proc(action_map: ^input_mapping_t, action_id: i32) -> bool {
-    action, ok := action_map.actions[action_id]
-    assert(ok, "unregistered action: ")
-    for button in action.buttons {
-        if button.just_released {return true}
-    }
-    return false
+	action, ok := action_map.actions[action_id]
+	assert(ok, "unregistered action: ")
+	for button in action.buttons {
+		if button.just_released {return true}
+	}
+	return false
 }
-
 
 inputs_listen_to_glfw_keys :: proc "c" (
 	window: glfw.WindowHandle,
@@ -398,6 +400,28 @@ inputs_listen_to_glfw_keys :: proc "c" (
 	p_key.just_released = !p_key.just_released && p_key.is_down && !is_down
 	p_key.is_down = is_down
 	p_key.half_transition_count += 1
+
+	when base.LUNA_EDITOR {
+		imgui_glfw.KeyCallback(window, key, scancode, action, mods)
+	}
+}
+
+inputs_listen_to_glfw_char :: proc "c" (window: glfw.WindowHandle, codepoint: rune) {
+	when base.LUNA_EDITOR {
+		imgui_glfw.CharCallback(window, c.uint(u32(codepoint)))
+	}
+}
+
+inputs_listen_to_glfw_cursor_pos :: proc "c" (window: glfw.WindowHandle, xpos, ypos: f64) {
+	when base.LUNA_EDITOR {
+		imgui_glfw.CursorPosCallback(window, xpos, ypos)
+	}
+}
+
+inputs_listen_to_glfw_scroll :: proc "c" (window: glfw.WindowHandle, xoffset, yoffset: f64) {
+	when base.LUNA_EDITOR {
+		imgui_glfw.ScrollCallback(window, xoffset, yoffset)
+	}
 }
 
 inputs_listen_to_glfw_mouse_buttons :: proc "c" (
@@ -412,6 +436,10 @@ inputs_listen_to_glfw_mouse_buttons :: proc "c" (
 	p_button.just_released = !p_button.just_released && p_button.is_down && !is_down
 	p_button.is_down = is_down
 	p_button.half_transition_count += 1
+
+	when base.LUNA_EDITOR {
+		imgui_glfw.MouseButtonCallback(window, button, action, mods)
+	}
 }
 
 
@@ -473,7 +501,7 @@ inputs_fill_lookup_tables :: proc() {
 		glfw.KEY_LEFT          = keycode_e.KEY_LEFT,
 		glfw.KEY_RIGHT         = keycode_e.KEY_RIGHT,
 		glfw.KEY_BACKSPACE     = keycode_e.KEY_BACKSPACE,
-		glfw.KEY_INSERT        = keycode_e.KEY_RETURN,
+		glfw.KEY_ENTER         = keycode_e.KEY_RETURN,
 		glfw.KEY_DELETE        = keycode_e.KEY_DELETE,
 		glfw.KEY_INSERT        = keycode_e.KEY_INSERT,
 		glfw.KEY_HOME          = keycode_e.KEY_HOME,

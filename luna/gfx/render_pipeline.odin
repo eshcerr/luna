@@ -7,8 +7,13 @@ import "core:strings"
 import gl "vendor:OpenGL"
 import "vendor:glfw"
 
+import imgui "../../vendor/odin-imgui"
+import imgui_glfw "../../vendor/odin-imgui/imgui_impl_glfw"
+import imgui_opengl "../../vendor/odin-imgui/imgui_impl_opengl3"
+
 GL_MAJOR_VERSION :: 4
 GL_MINOR_VERSION :: 3
+DISABLE_DOCKING :: #config(DISABLE_DOCKING, false)
 
 supported_backend_e :: enum {
 	OPENGL,
@@ -43,14 +48,14 @@ render_pipeline_t :: struct {
 pip: ^render_pipeline_t
 
 render_pipeline_setup :: proc() {
+	assert(bool(glfw.Init()), "failed to init glfw")
+
 	glfw.WindowHint(glfw.CONTEXT_VERSION_MAJOR, GL_MAJOR_VERSION)
 	glfw.WindowHint(glfw.CONTEXT_VERSION_MINOR, GL_MINOR_VERSION)
 	glfw.WindowHint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE)
 	glfw.WindowHint(glfw.OPENGL_FORWARD_COMPAT, true)
 	glfw.WindowHint(glfw.CLIENT_API, glfw.OPENGL_API)
 	glfw.WindowHint(glfw.DOUBLEBUFFER, true)
-
-	assert(bool(glfw.Init()), "failed to init glfw")
 }
 
 render_pipeline_init :: proc(window_title: string) {
@@ -66,12 +71,44 @@ render_pipeline_init :: proc(window_title: string) {
 	assert(pip.window_handle != nil, "failed to create window")
 
 	glfw.MakeContextCurrent(pip.window_handle.(glfw.WindowHandle))
-	glfw.SwapInterval(0)
+	glfw.SwapInterval(1) // vsync = 1
 
-	gl.load_up_to(GL_MAJOR_VERSION, GL_MINOR_VERSION, glfw.gl_set_proc_address)
+	gl.load_up_to(GL_MAJOR_VERSION, GL_MINOR_VERSION, proc(p: rawptr, name: cstring) {
+		(cast(^rawptr)p)^ = glfw.GetProcAddress(name)
+	})
+
+	when base.LUNA_EDITOR {
+		imgui.CHECKVERSION()
+		imgui.CreateContext()
+
+		io := imgui.GetIO()
+		io.ConfigFlags += {.NavEnableKeyboard, .NavEnableGamepad}
+
+		when !DISABLE_DOCKING {
+			io.ConfigFlags += {.DockingEnable}
+			io.ConfigFlags += {.ViewportsEnable}
+
+			style := imgui.GetStyle()
+			style.WindowRounding = 0
+			style.Colors[imgui.Col.WindowBg].w = 1
+		}
+		// io.ConfigFlags += {.Docking} // if i want docking at some point
+
+		imgui_glfw.InitForOpenGL(pip.window_handle.(glfw.WindowHandle), false)
+		imgui_opengl.Init("#version 430")
+		imgui.StyleColorsDark()
+	}
+
 	gl.Viewport(0, 0, pip.window_size.x, pip.window_size.y)
 }
 
 render_pipeline_deinit :: proc() {
+	when base.LUNA_EDITOR {
+		imgui_opengl.Shutdown()
+		imgui_glfw.Shutdown()
+		imgui.DestroyContext()
+	}
+
+	glfw.DestroyWindow(pip.window_handle.(glfw.WindowHandle))
 	glfw.Terminate()
 }

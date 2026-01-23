@@ -2,6 +2,8 @@ package luna_base
 
 import "core:fmt"
 
+LUNA_EDITOR :: #config(LUNA_EDITOR, false)
+
 KB :: 1024
 MB :: 1024 * 1024
 GB :: 1024 * 1024 * 1024
