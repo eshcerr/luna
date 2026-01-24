@@ -139,7 +139,7 @@ init :: proc(app: ^application_t) {
 //	esh_sprite_batch = gfx.batch_init(esh_atlas, .SPRITE)
 //	font_batch = gfx.batch_init(font_atlas, .FONT)
 
-	esh = ecs.ecs_create_entity(app.ecs)
+	esh = ecs.ecs_create_entity(app.ecs, "esh")
 	ecs.ecs_add_component(
 		app.ecs,
 		esh,

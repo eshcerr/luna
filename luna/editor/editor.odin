@@ -170,6 +170,9 @@ editor_hierarchy_window :: proc(editor: ^editor_t) {
 	for entity in entity_set {
 		context.allocator = context.temp_allocator
 		label := fmt.tprintf("entity %d", entity)
+		if name, exists := editor.ctx.ecs.entity_to_name[entity]; exists {
+			label = name
+		}
 
 		flags: imgui.TreeNodeFlags = {.Leaf, .SpanAvailWidth}
 		if editor.ctx.selected_entity == entity {
@@ -202,7 +205,11 @@ editor_inspector_window :: proc(editor: ^editor_t) {
 
 	context.allocator = context.temp_allocator
 
-	imgui.Text("entity %d", editor.ctx.selected_entity)
+	if name, exists := editor.ctx.ecs.entity_to_name[editor.ctx.selected_entity]; exists {
+		imgui.Text("entity: %s", name)
+	} else {
+		imgui.Text("entity %d", editor.ctx.selected_entity)
+	}
 	imgui.Separator()
 
 	for type_id, storage in editor.ctx.ecs.components {
