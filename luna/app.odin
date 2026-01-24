@@ -168,7 +168,6 @@ app_init :: proc(app: ^application_t) {
 	)
 
 	app.asset_manager = assets.asset_manager_init("assets/")
-	assets.asset_manager_scan(app.asset_manager)
 	app.ecs = ecs.ecs_init()
 
 	app.editor = editor.editor_init()
