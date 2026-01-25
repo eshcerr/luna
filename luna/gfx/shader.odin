@@ -206,6 +206,9 @@ GLSL_FONT_FRAGMENT_SHADER :: `
 
 shader_t :: struct {
 	program: u32,
+	// vert path
+	// frag path
+	// cached uniform locations
 }
 
 shader_type_e :: enum {

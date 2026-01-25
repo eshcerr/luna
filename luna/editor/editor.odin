@@ -349,11 +349,11 @@ editor_draw_folder_tree :: proc(editor: ^editor_t) {
 		defer delete(folders_set)
 
 		for id, asset in manager.assets {
-			if asset.v_folder != "" {
-				folders_set[asset.v_folder] = true
+			if asset.editor_folder != "" {
+				folders_set[asset.editor_folder] = true
 
 				// Also add parent folders
-				parts := strings.split(asset.v_folder, "/")
+				parts := strings.split(asset.editor_folder, "/")
 				defer delete(parts)
 
 				current := ""
@@ -514,7 +514,7 @@ editor_draw_asset_grid :: proc(editor: ^editor_t) {
 	defer delete(assets_to_display)
 
 	for id, asset in manager.assets {
-		if asset.v_folder != editor.ctx.selected_asset_folder do continue
+		if asset.editor_folder != editor.ctx.selected_asset_folder do continue
 
 		search_text := string(cstring(raw_data(&editor.ctx.asset_search)))
 		if search_text != "" {

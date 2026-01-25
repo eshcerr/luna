@@ -7,29 +7,33 @@ animation_option_e :: enum {
 	ONE_TIME,
 }
 
-animation_play_state_e :: enum {
-	STOPED,
-	PLAYING,
-	PAUSED,
-}
-
 animation_t :: struct {
-	option:     animation_option_e,
-	play_state: animation_play_state_e,
-	state:      animation_state_t,
-	frames:     []animation_frame_t,
-}
-
-animation_state_t :: struct {
-	time, next_frame_time: f32,
-	current_frame_index:   u32,
+	name:   string,
+	option: animation_option_e,
+	frames: []animation_frame_t,
 }
 
 animation_frame_t :: struct {
 	duration:   f32,
 	atlas_rect: u32,
-	offset: base.ivec2,
+	offset:     base.ivec2,
 }
+
+animator_play_state_e :: enum {
+	STOPED,
+	PLAYING,
+	PAUSED,
+}
+
+animator_t :: struct {
+	animation:       ^animation_t,
+	current_frame:   u32,
+	time:            f32,
+	next_frame_time: f32,
+	speed:           f32,
+	play_state:      animator_play_state_e,
+}
+
 
 animation_get_frame_rect :: proc(animation: ^animation_t) -> u32 {
 	return animation.frames[animation.state.current_frame_index].atlas_rect

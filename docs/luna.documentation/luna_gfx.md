@@ -1,0 +1,6 @@
+[[sprite_t]]
+[[atlas_t]]
+[[atlas_rect_t]]
+[[animation_t]]
+[[animation_state_t]]
+[[animation_frame_t]]

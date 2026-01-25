@@ -1,9 +1,10 @@
 package luna_assets
 
-import "core:time"
+import "core:image"
 import "core:fmt"
 import "core:os"
 import "core:path/slashpath"
+import "core:time"
 
 import "core:strings"
 
@@ -26,18 +27,32 @@ asset_type_e :: enum {
 	UNKNOWN,
 }
 
+asset_metadata_t :: struct {
+	name:          string,
+	type:          asset_type_e,
+	editor_folder: string,
+	tags:          [dynamic]string,
+}
+
 asset_t :: struct {
-	id:        u32,
-	name:      string,
-	path:      string,
-	full_path: string,
-	type:      asset_type_e,
-	v_folder:  string, // virtual folder
-	tags:      [dynamic]string,
-	file_size: i64,
-	modified:  time.Time,
-	loaded:    bool,
-	handle:    rawptr,
+	metadata: asset_metadata_t,
+	id:            u32,
+	path:          string,
+	full_path:     string,
+	file_size:     i64,
+	modified:      time.Time,
+	loaded:        bool,
+	handle:        rawptr,
+}
+
+asset_file_t :: struct {
+	metadata: asset_metadata_t,
+	data: asset_data_t,
+}
+
+asset_data_t :: union {
+	sprite_asset_t,
+	atlas_asset_t,
 }
 
 asset_manager_t :: struct {
@@ -147,22 +162,22 @@ asset_manager_register :: proc(
 
 	asset_type := (type != nil ? type : detect_asset_type(rel_path))
 	name := "unnamed"
-    if last_slash := strings.last_index(rel_path, "/"); last_slash >= 0 {
-        name = rel_path[last_slash+1:]
-    }
-	
+	if last_slash := strings.last_index(rel_path, "/"); last_slash >= 0 {
+		name = rel_path[last_slash + 1:]
+	}
+
 	asset := asset_t {
-		id        = id,
-		name      = name,
-		path      = strings.clone(rel_path),
-		full_path = strings.clone(full_path),
-		type      = asset_type,
-		v_folder  = folder,
-		tags      = make([dynamic]string),
-		file_size = file_info.size,
-		modified  = file_info.modification_time,
-		loaded    = false,
-		handle    = nil,
+		id            = id,
+		name          = name,
+		path          = strings.clone(rel_path),
+		full_path     = strings.clone(full_path),
+		type          = asset_type,
+		editor_folder = folder,
+		tags          = make([dynamic]string),
+		file_size     = file_info.size,
+		modified      = file_info.modification_time,
+		loaded        = false,
+		handle        = nil,
 	}
 
 	manager.assets[id] = asset
@@ -327,7 +342,7 @@ asset_manager_query :: proc(manager: ^asset_manager_t, query: asset_query_t) -> 
 
 	if query.folder != "" {
 		for id in candidates {
-			for	asset_id in manager.folder_index[query.folder] {
+			for asset_id in manager.folder_index[query.folder] {
 				if id != asset_id {
 					delete_key(&candidates, id)
 				}
@@ -335,7 +350,7 @@ asset_manager_query :: proc(manager: ^asset_manager_t, query: asset_query_t) -> 
 		}
 	}
 
-	for	id in candidates {
+	for id in candidates {
 		append(&results, id)
 	}
 
