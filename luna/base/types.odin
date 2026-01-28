@@ -13,12 +13,22 @@ ivec4 :: [4]i32
 mat3 :: linalg.Matrix3x3f32
 mat4 :: linalg.Matrix4x4f32
 
-aabb :: [4]f32
-iaabb :: [4]i32
+aabb :: vec4
+iaabb :: ivec4
+
+rect :: struct {
+	min, max: vec2,
+}
+
+irect :: struct {
+	min, max: ivec2,
+}
+
 circle :: struct {
 	center: vec2,
 	radius: f32,
 }
+
 polygon :: []vec2
 
 vec2_to_ivec2 :: proc(v: vec2) -> ivec2 {
@@ -27,4 +37,10 @@ vec2_to_ivec2 :: proc(v: vec2) -> ivec2 {
 
 ivec2_to_vec2 :: proc(v: ivec2) -> vec2 {
 	return vec2{f32(v.x), f32(v.y)}
+}
+
+transform2D_t :: struct {
+	position: vec2,
+	scale:    vec2,
+	rotation: f32,
 }

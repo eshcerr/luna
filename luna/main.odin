@@ -60,11 +60,6 @@ esh: ecs.entity_t
 ground_solid: u32
 default_shader_id: u32
 
-transform2D_t :: struct {
-	position: base.vec2,
-	rotation: f32,
-	scale:    base.vec2,
-}
 
 velocity2D_t :: struct {
 	velocity: base.vec2,
