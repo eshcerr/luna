@@ -1,5 +1,6 @@
 package luna_gfx
 
+import "core:math"
 
 // to future me, i made the decision to change my old rendering method to this one.
 // this rendering method is based on the only two devlogs made by aarthificial on his pixel renderer.
@@ -8,8 +9,11 @@ package luna_gfx
 
 
 import "../base"
+import "core:os"
 
+import "base:runtime"
 import "core:fmt"
+import "core:reflect"
 import "core:strings"
 import gl "vendor:OpenGL"
 import stbi "vendor:stb/image"
@@ -87,7 +91,7 @@ texture2D_init :: proc(
 		gl_wrap = gl.REPEAT
 	}
 
-	gl_filter := filter == .LINEAR ? gl.LINEAR : gl.NEAREST
+	gl_filter: i32 = filter == .LINEAR ? gl.LINEAR : gl.NEAREST
 
 	// set wrap and filter parameters
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl_wrap)
@@ -113,7 +117,7 @@ texture2D_init :: proc(
 }
 
 // deinitialize a texture, free it from the GPU and RAM
-texture_deinit :: proc(texture: ^texture2D_t) {
+texture2D_deinit :: proc(texture: ^texture2D_t) {
 	gl.DeleteTextures(1, &texture.id)
 	stbi.image_free(&texture.data[0])
 	texture.data = nil
@@ -158,8 +162,76 @@ shader_t :: struct {
 // initialize a shader from it's source files.
 // this might cause issues for a only frag shader like for render textures ?
 shader_init :: proc(vert_path, frag_path: string) -> ^shader_t {
-	program, is_ok := gl.load_shaders_file(vert_path, frag_path)
-	assert(is_ok, fmt.tprintf("shader failed to load:\nvert: %s\nfrag: %s", vert_path, frag_path))
+	vert_data, vert_ok := os.read_entire_file(vert_path)
+	if !vert_ok {
+		fmt.eprintfln("Failed to read vertex shader: %s", vert_path)
+		return nil
+	}
+	defer delete(vert_data)
+
+	frag_data, frag_ok := os.read_entire_file(frag_path)
+	if !frag_ok {
+		fmt.eprintfln("Failed to read fragment shader: %s", frag_path)
+		return nil
+	}
+	defer delete(frag_data)
+
+	// Compiler vertex
+	vert_shader := gl.CreateShader(gl.VERTEX_SHADER)
+	vert_source := cstring(raw_data(vert_data))
+	gl.ShaderSource(vert_shader, 1, &vert_source, nil)
+	gl.CompileShader(vert_shader)
+
+	success: i32
+	gl.GetShaderiv(vert_shader, gl.COMPILE_STATUS, &success)
+	if success == 0 {
+		info_log: [1024]u8
+		gl.GetShaderInfoLog(vert_shader, 1024, nil, raw_data(&info_log))
+		fmt.eprintfln("VERTEX SHADER ERROR: %s\n%s", vert_path, cstring(raw_data(&info_log)))
+		gl.DeleteShader(vert_shader)
+		return nil
+	}
+
+	// Compiler fragment
+	frag_shader := gl.CreateShader(gl.FRAGMENT_SHADER)
+	frag_source := cstring(raw_data(frag_data))
+	gl.ShaderSource(frag_shader, 1, &frag_source, nil)
+	gl.CompileShader(frag_shader)
+
+	gl.GetShaderiv(frag_shader, gl.COMPILE_STATUS, &success)
+	if success == 0 {
+		info_log: [1024]u8
+		gl.GetShaderInfoLog(frag_shader, 1024, nil, raw_data(&info_log))
+		fmt.eprintfln("FRAGMENT SHADER ERROR: %s\n%s", frag_path, cstring(raw_data(&info_log)))
+		gl.DeleteShader(vert_shader)
+		gl.DeleteShader(frag_shader)
+		return nil
+	}
+
+	// Link program
+	program := gl.CreateProgram()
+	gl.AttachShader(program, vert_shader)
+	gl.AttachShader(program, frag_shader)
+	gl.LinkProgram(program)
+
+	gl.GetProgramiv(program, gl.LINK_STATUS, &success)
+	if success == 0 {
+		info_log: [1024]u8
+		gl.GetProgramInfoLog(program, 1024, nil, raw_data(&info_log))
+		fmt.eprintfln(
+			"SHADER LINKING ERROR: %s -> %s\n%s",
+			vert_path,
+			frag_path,
+			cstring(raw_data(&info_log)),
+		)
+		gl.DeleteShader(vert_shader)
+		gl.DeleteShader(frag_shader)
+		gl.DeleteProgram(program)
+		return nil
+	}
+
+	gl.DeleteShader(vert_shader)
+	gl.DeleteShader(frag_shader)
 
 	shader := new(shader_t)
 	shader.program = program
@@ -168,51 +240,50 @@ shader_init :: proc(vert_path, frag_path: string) -> ^shader_t {
 	return shader
 }
 
-// set a shader uniform value
-shader_set_uniform :: proc {
-	shader_set_uniform_i32,
-	shader_set_uniform_ivec2,
-	shader_set_uniform_ivec3,
-	shader_set_uniform_ivec4,
-	shader_set_uniform_f32,
-	shader_set_uniform_vec2,
-	shader_set_uniform_vec3,
-	shader_set_uniform_vec4,
-	shader_set_uniform_mat3,
+// // set a shader uniform value
+shader_set_uniform :: proc {// 	shader_set_uniform_i32,
+	// 	shader_set_uniform_ivec2,
+	// 	shader_set_uniform_ivec3,
+	// 	shader_set_uniform_ivec4,
+	// 	shader_set_uniform_f32,
+	// 	shader_set_uniform_vec2,
+	// 	shader_set_uniform_vec3,
+	// 	shader_set_uniform_vec4,
+	// 	shader_set_uniform_mat3,
 	shader_set_uniform_mat4,
 }
 
-shader_set_uniform_i32 :: proc(shader: ^shader_t, name: string, v: i32) {
-	gl.Uniform1i(shader.uniforms[name].location, v)
-}
-shader_set_uniform_ivec2 :: proc(shader: ^shader_t, name: string, v: base.ivec2) {
-	gl.Uniform2iv(shader.uniforms[name].location, 1, &v[0])
-}
-shader_set_uniform_ivec3 :: proc(shader: ^shader_t, name: string, v: base.ivec3) {
-	gl.Uniform3iv(shader.uniforms[name].location, 1, &v[0])
-}
-shader_set_uniform_ivec4 :: proc(shader: ^shader_t, name: string, v: base.ivec4) {
-	gl.Uniform4iv(shader.uniforms[name].location, 1, &v[0])
-}
+// shader_set_uniform_i32 :: proc(shader: ^shader_t, name: string, v: i32) {
+// 	gl.Uniform1i(shader.uniforms[name].location, v)
+// }
+// shader_set_uniform_ivec2 :: proc(shader: ^shader_t, name: string, v: base.ivec2) {
+// 	gl.Uniform2iv(shader.uniforms[name].location, 1, &v[0])
+// }
+// shader_set_uniform_ivec3 :: proc(shader: ^shader_t, name: string, v: base.ivec3) {
+// 	gl.Uniform3iv(shader.uniforms[name].location, 1, &v[0])
+// }
+// shader_set_uniform_ivec4 :: proc(shader: ^shader_t, name: string, v: base.ivec4) {
+// 	gl.Uniform4iv(shader.uniforms[name].location, 1, &v[0])
+// }
 
-shader_set_uniform_f32 :: proc(shader: ^shader_t, name: string, v: f32) {
-	gl.Uniform1f(shader.uniforms[name].location, v)
-}
-shader_set_uniform_vec2 :: proc(shader: ^shader_t, name: string, v: base.vec2) {
-	gl.Uniform2fv(shader.uniforms[name].location, 1, &v[0])
-}
-shader_set_uniform_vec3 :: proc(shader: ^shader_t, name: string, v: base.vec3) {
-	gl.Uniform3fv(shader.uniforms[name].location, 1, &v[0])
-}
-shader_set_uniform_vec4 :: proc(shader: ^shader_t, name: string, v: base.vec4) {
-	gl.Uniform4fv(shader.uniforms[name].location, 1, &v[0])
-}
+// shader_set_uniform_f32 :: proc(shader: ^shader_t, name: string, v: f32) {
+// 	gl.Uniform1f(shader.uniforms[name].location, v)
+// }
+// shader_set_uniform_vec2 :: proc(shader: ^shader_t, name: string, v: base.vec2) {
+// 	gl.Uniform2fv(shader.uniforms[name].location, 1, &v[0])
+// }
+// shader_set_uniform_vec3 :: proc(shader: ^shader_t, name: string, v: base.vec3) {
+// 	gl.Uniform3fv(shader.uniforms[name].location, 1, &v[0])
+// }
+// shader_set_uniform_vec4 :: proc(shader: ^shader_t, name: string, v: base.vec4) {
+// 	gl.Uniform4fv(shader.uniforms[name].location, 1, &v[0])
+// }
 
-shader_set_uniform_mat3 :: proc(shader: ^shader_t, name: string, v: base.mat3) {
-	gl.UniformMatrix3fv(shader.uniforms[name].location, 1, &v[0][0])
-}
-shader_set_uniform_mat4 :: proc(shader: ^shader_t, name: string, v: base.mat4) {
-	gl.UniformMatrix4fv(shader.uniforms[name].location, 1, &v[0][0])
+// shader_set_uniform_mat3 :: proc(shader: ^shader_t, name: string, v: base.mat3) {
+// 	gl.UniformMatrix3fv(shader.uniforms[name].location, 1, false, &v[0][0])
+// }
+shader_set_uniform_mat4 :: proc(shader: ^shader_t, name: string, v: ^base.mat4) {
+	gl.UniformMatrix4fv(shader.uniforms[name].location, 1, false, &v[0][0])
 }
 
 // the render_texture_t struct is used as a frame buffer on the gpu
@@ -300,7 +371,7 @@ sprite_options_e :: enum {
 sprite_renderer_t :: struct {
 	// sprite atlas data
 	atlas:        ^atlas_t,
-	atlas_rect:   i32,
+	atlas_rect:   u32,
 
 	// sprite tint
 	tint:         base.vec4,
@@ -376,6 +447,16 @@ sprite_batch2D_t :: struct {
 	mapped_buffer:           [^]sprite_instance_data_t,
 }
 
+component_count :: proc(ti: ^runtime.Type_Info) -> i32 {
+	#partial switch v in ti.variant {
+	case runtime.Type_Info_Float:
+		return 1
+	case runtime.Type_Info_Array:
+		return i32(v.count)
+	}
+	return 1
+}
+
 sprite_batch2D_init :: proc(batch: ^sprite_batch2D_t, shader: ^shader_t) {
 	batch.shader = shader
 	batch.draw_calls = make([dynamic]sprite_batch2D_draw_call_t)
@@ -396,55 +477,33 @@ sprite_batch2D_init :: proc(batch: ^sprite_batch2D_t, shader: ^shader_t) {
 
 	// try to use persistent mapping buffer
 	batch.use_percistent_mapping = false
-	if gl.BufferStorage != nil {
-		batch.use_percistent_mapping = true
-	}
+	//if gl.BufferStorage != nil {
+	//	batch.use_percistent_mapping = true
+	//}
 
 	gl.GenBuffers(1, &batch.vbo)
-	gl.BindBuffer(batch.vbo)
+	gl.BindBuffer(gl.ARRAY_BUFFER, batch.vbo)
 
-	if batch.use_percistent_mapping {
-		flags := gl.MAP_WRITE_BIT | gl.MAP_PERSISTENT_BIT | gl.MAP_COHERENT_BIT
-		gl.BufferStorage(
-			gl.ARRAY_BUFFER,
-			size_of(sprite_instance_data_t) * MAX_SPRITES_PER_BATCH,
-			nil,
-			u32(flags),
-		)
-
-		batch.mapped_buffer = cast([^]sprite_instance_data_t)gl.MapBufferRange(
-			gl.ARRAY_BUFFER,
-			0,
-			size_of(sprite_instance_data_t) * MAX_SPRITES_PER_BATCH,
-			u32(flags),
-		)
-	} else {
-		gl.BufferData(
-			gl.ARRAY_BUFFER,
-			size_of(sprite_instance_data_t) * MAX_SPRITES_PER_BATCH,
-			nil,
-			gl.STREAM_DRAW,
-		)
-	}
+	gl.BufferData(
+		gl.ARRAY_BUFFER,
+		size_of(sprite_instance_data_t) * MAX_SPRITES_PER_BATCH,
+		nil,
+		gl.DYNAMIC_DRAW,
+	)
 
 	stride := size_of(sprite_instance_data_t)
 	attrib_id := u32(1)
 
-	ti := type_info_of(sprite_instance_data_t)
-	si := ti.variant.(Type_Info_Struct)
-	for i: i32 = 0; i < si.field_count; i += 1 {
-		field_type := si.types[i]
-		offset := si.offsets[i]
+	ti := type_info_of(typeid_of(sprite_instance_data_t))
+	b := runtime.type_info_base(ti)
+	s := b.variant.(runtime.Type_Info_Struct)
 
+	for i: i32 = 0; i < s.field_count; i += 1 {
+		field_type := s.types[i]
+		offset := s.offsets[i]
+		components := component_count(field_type)
 		gl.EnableVertexAttribArray(attrib_id)
-		gl.VertexAttribPointer(
-			attrib_id,
-			field_type.size,
-			gl.FLOAT,
-			gl.FALSE,
-			stride,
-			rawptr(offset),
-		)
+		gl.VertexAttribPointer(attrib_id, i32(components), gl.FLOAT, gl.FALSE, i32(stride), offset)
 		gl.VertexAttribDivisor(attrib_id, 1)
 		attrib_id += 1
 	}
@@ -459,10 +518,10 @@ sprite_batch2D_init :: proc(batch: ^sprite_batch2D_t, shader: ^shader_t) {
 }
 
 sprite_batch2D_deinit :: proc(batch: ^sprite_batch2D_t) {
-	if batch.use_percistent_mapping {
-		gl.BindBuffer(gl.ARRAY_BUFFER, batch.vbo)
-		gl.UnmapBuffer(gl.ARRAY_BUFFER)
-	}
+	//if batch.use_percistent_mapping {
+	//	gl.BindBuffer(gl.ARRAY_BUFFER, batch.vbo)
+	//	gl.UnmapBuffer(gl.ARRAY_BUFFER)
+	//}
 
 	gl.DeleteVertexArrays(1, &batch.vao)
 	gl.DeleteBuffers(1, &batch.quad_vbo)
@@ -488,14 +547,15 @@ sprite_batch2D_end :: proc(batch: ^sprite_batch2D_t) {
 			batch.instance_count - batch.current_call.instance_start
 	}
 
-	if !batch.use_percistent_mapping {
+	// if !batch.use_percistent_mapping {
+	if batch.instance_count > 0 {
 		gl.BindBuffer(gl.ARRAY_BUFFER, batch.vbo)
 
 		gl.BufferData(
 			gl.ARRAY_BUFFER,
 			size_of(sprite_instance_data_t) * MAX_SPRITES_PER_BATCH,
 			nil,
-			gl.STREAM_DRAW,
+			gl.DYNAMIC_DRAW,
 		)
 
 		gl.BufferSubData(
@@ -505,6 +565,7 @@ sprite_batch2D_end :: proc(batch: ^sprite_batch2D_t) {
 			&batch.instances[batch.current_instance_buffer][0],
 		)
 	}
+	// }
 
 	gl.BindVertexArray(batch.vao)
 
@@ -519,7 +580,7 @@ sprite_batch2D_end :: proc(batch: ^sprite_batch2D_t) {
 			for i in 0 ..< MAX_TEXTURE_PER_BATCH {
 				samplers[i] = i32(i)
 			}
-			gl.Uniform1iv(sampler_loc, MAX_TEXTURE_PER_BATCH, &samplers[0])
+			gl.Uniform1iv(sampler_loc.location, MAX_TEXTURE_PER_BATCH, &samplers[0])
 		}
 
 		for i in 0 ..< call.texture_count {
@@ -533,7 +594,7 @@ sprite_batch2D_end :: proc(batch: ^sprite_batch2D_t) {
 			gl.UNSIGNED_INT,
 			nil,
 			i32(call.instance_count),
-			i32(call.instance_start),
+			u32(call.instance_start),
 		)
 	}
 
@@ -618,7 +679,7 @@ sprite_batch2D_draw :: proc(
 		texture_slot, _ = sprite_batch2D_get_texture_slot(batch, sprite.atlas.texture)
 	}
 
-	if sprite.atlas_rect < 0 || sprite.atlas_rect >= i32(len(sprite.atlas.rects)) do return
+	if sprite.atlas_rect < 0 || sprite.atlas_rect >= u32(len(sprite.atlas.rects)) do return
 
 	atlas_rect := sprite.atlas.rects[sprite.atlas_rect]
 	inv_tex_width := 1.0 / f32(sprite.atlas.texture.dimensions.x)
@@ -641,19 +702,19 @@ sprite_batch2D_draw :: proc(
 	}
 
 	sprite_size := base.vec2{f32(atlas_rect.rect.z), f32(atlas_rect.rect.w)}
-	final_scale := sprite_size * transform.scale
+	final_scale := sprite_size * transform.scale * {1, -1}
 
-	sin_r := math.sin(transform.rotation)
-	cos_r := math.cos(transform.rotation)
+	sin_r := math.sin(math.to_radians_f32(transform.rotation))
+	cos_r := math.cos(math.to_radians_f32(transform.rotation))
 
-	pivot := base.vec2{f32(atlas_rect.pivot.x), f32(atlas_rect.pivot.y)}
+	pivot := base.vec2{f32(atlas_rect.pivot.x), f32(atlas_rect.pivot.y)} - (sprite_size / 2)
 	pivot_offset := pivot * transform.scale
 	rotated_pivot := base.vec2 {
 		pivot_offset.x * cos_r - pivot_offset.y * sin_r,
 		pivot_offset.x * sin_r + pivot_offset.y * cos_r,
 	}
 
-	final_position := transform.position - rotated_pivot
+	final_position := transform.position + (rotated_pivot / 2)
 
 	instance := sprite_instance_data_t {
 		position    = final_position,
@@ -666,11 +727,12 @@ sprite_batch2D_draw :: proc(
 		tint        = sprite.tint,
 	}
 
-	if batch.use_percistent_mapping {
-		batch.mapped_buffer[batch.instance_count] = instance
-	} else {
-		batch.instances[batch.current_instance_buffer][batch.instance_count] = instance
-	}
+
+	// if batch.use_percistent_mapping {
+	// 	batch.mapped_buffer[batch.instance_count] = instance
+	// } else {
+	batch.instances[batch.current_instance_buffer][batch.instance_count] = instance
+	// }
 
 	batch.instance_count += 1
 }
@@ -743,11 +805,11 @@ sprite_batch2D_draw_render_texture_tex :: proc(
 		tint        = tint,
 	}
 
-	if batch.use_percistent_mapping {
-		batch.mapped_buffer[batch.instance_count] = instance
-	} else {
-		batch.instances[batch.current_instance_buffer][batch.instance_count] = instance
-	}
+	//if batch.use_percistent_mapping {
+	//	batch.mapped_buffer[batch.instance_count] = instance
+	//} else {
+	batch.instances[batch.current_instance_buffer][batch.instance_count] = instance
+	//}
 
 	batch.instance_count += 1
 }
@@ -810,6 +872,9 @@ deferred_light_renderer_t :: struct {
 	// light accumulation texture
 	light_rt:         render_texture_t,
 
+	// fullscreen quad for composite pass
+	fullscreen_quad:  fullscreen_quad_t,
+
 	// shaders
 	gbuffer_shader:   ^shader_t,
 	light_shader:     ^shader_t,
@@ -845,12 +910,15 @@ deferred_light_renderer_init :: proc(
 		return renderer, false
 	}
 
+	renderer.fullscreen_quad = fullscreen_quad_init()
+
 	return renderer, true
 }
 
 deferred_light_renderer_deinit :: proc(renderer: ^deferred_light_renderer_t) {
 	gbuffer_deinit(&renderer.gbuffer)
 	render_texture_deinit(&renderer.light_rt)
+	fullscreen_quad_deinit(&renderer.fullscreen_quad)
 	delete(renderer.lights)
 }
 
@@ -929,37 +997,37 @@ deferred_light_renderer_render_light :: proc(
 	batch.shader = renderer.light_shader
 
 	// Set light uniforms
-	if loc, ok := batch.shader.uniforms["u_light_pos"]; ok {
-		gl.Uniform2f(loc, light.position.x, light.position.y)
+	if info, ok := batch.shader.uniforms["u_light_pos"]; ok {
+		gl.Uniform2f(info.location, light.position.x, light.position.y)
 	}
-	if loc, ok := batch.shader.uniforms["u_light_color"]; ok {
-		gl.Uniform3f(loc, light.tint.r, light.tint.g, light.tint.b)
+	if info, ok := batch.shader.uniforms["u_light_color"]; ok {
+		gl.Uniform3f(info.location, light.tint.r, light.tint.g, light.tint.b)
 	}
-	if loc, ok := batch.shader.uniforms["u_light_intensity"]; ok {
-		gl.Uniform1f(loc, light.intensity)
+	if info, ok := batch.shader.uniforms["u_light_intensity"]; ok {
+		gl.Uniform1f(info.location, light.intensity)
 	}
-	if loc, ok := batch.shader.uniforms["u_light_radius"]; ok {
-		gl.Uniform1f(loc, light.radius)
+	if info, ok := batch.shader.uniforms["u_light_radius"]; ok {
+		gl.Uniform1f(info.location, light.radius)
 	}
-	if loc, ok := batch.shader.uniforms["u_volumetric_intensity"]; ok {
-		gl.Uniform1f(loc, light.volumetric_intensity)
+	if info, ok := batch.shader.uniforms["u_volumetric_intensity"]; ok {
+		gl.Uniform1f(info.location, light.volumetric_intensity)
 	}
-	if loc, ok := batch.shader.uniforms["u_light_direction"]; ok {
-		gl.Uniform2f(loc, light.direction.x, light.direction.y)
+	if info, ok := batch.shader.uniforms["u_light_direction"]; ok {
+		gl.Uniform2f(info.location, light.direction.x, light.direction.y)
 	}
-	if loc, ok := batch.shader.uniforms["u_inner_angle"]; ok {
-		gl.Uniform1f(loc, light.inner_angle)
+	if info, ok := batch.shader.uniforms["u_inner_angle"]; ok {
+		gl.Uniform1f(info.location, light.inner_angle)
 	}
-	if loc, ok := batch.shader.uniforms["u_outer_angle"]; ok {
-		gl.Uniform1f(loc, light.outer_angle)
+	if info, ok := batch.shader.uniforms["u_outer_angle"]; ok {
+		gl.Uniform1f(info.location, light.outer_angle)
 	}
 
 	// Bind G-Buffer textures
-	if loc, ok := batch.shader.uniforms["u_normal_tex"]; ok {
-		gl.Uniform1i(loc, 0)
+	if info, ok := batch.shader.uniforms["u_normal_tex"]; ok {
+		gl.Uniform1i(info.location, 0)
 	}
-	if loc, ok := batch.shader.uniforms["u_position_tex"]; ok {
-		gl.Uniform1i(loc, 1)
+	if info, ok := batch.shader.uniforms["u_position_tex"]; ok {
+		gl.Uniform1i(info.location, 1)
 	}
 
 	gl.ActiveTexture(gl.TEXTURE0)
@@ -985,34 +1053,35 @@ deferred_light_renderer_render_light :: proc(
 	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
 }
 
-
 deferred_light_renderer_render_composite :: proc(renderer: ^deferred_light_renderer_t) {
-	batch := renderer.batch
+	// Bind to the default framebuffer (screen)
+	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
+	gl.Viewport(0, 0, renderer.dimensions.x, renderer.dimensions.y)
 
-	old_shader := batch.shader
-	batch.shader = renderer.composite_shader
+	// Use the composite shader
+	gl.UseProgram(renderer.composite_shader.program)
 
-	if loc, ok := batch.shader.uniforms["u_color_tex"]; ok {
-		gl.Uniform1i(loc, 0)
+	// Set texture uniforms
+	if info, ok := renderer.composite_shader.uniforms["u_color_tex"]; ok {
+		gl.Uniform1i(info.location, 0)
 	}
-	if loc, ok := batch.shader.uniforms["u_light_tex"]; ok {
-		gl.Uniform1i(loc, 1)
+	if info, ok := renderer.composite_shader.uniforms["u_light_tex"]; ok {
+		gl.Uniform1i(info.location, 1)
 	}
 
+	// Bind the G-buffer color texture to texture unit 0
 	gl.ActiveTexture(gl.TEXTURE0)
 	gl.BindTexture(gl.TEXTURE_2D, renderer.gbuffer.color_rt.texture_id)
+
+	// Bind the light accumulation texture to texture unit 1
 	gl.ActiveTexture(gl.TEXTURE1)
 	gl.BindTexture(gl.TEXTURE_2D, renderer.light_rt.texture_id)
 
-	sprite_batch2D_begin(batch)
+	// Draw the fullscreen quad
+	fullscreen_quad_draw(&renderer.fullscreen_quad, renderer.composite_shader)
 
-	center := base.vec2{f32(renderer.dimensions.x) / 2, f32(renderer.dimensions.y) / 2}
-	size := base.vec2{f32(renderer.dimensions.x), f32(renderer.dimensions.y)}
-	sprite_batch2D_draw_render_texture(batch, &renderer.gbuffer.color_rt, center, size)
-
-	sprite_batch2D_end(batch)
-
-	batch.shader = old_shader
+	// Cleanup
+	gl.BindTexture(gl.TEXTURE_2D, 0)
 }
 
 deferred_light_renderer_render_scene :: proc(
@@ -1026,4 +1095,50 @@ deferred_light_renderer_render_scene :: proc(
 	}
 
 	deferred_light_renderer_render_composite(renderer)
+}
+
+fullscreen_quad_t :: struct {
+	vao, vbo: u32,
+}
+
+
+fullscreen_quad_init :: proc() -> fullscreen_quad_t {
+	quad := fullscreen_quad_t{}
+
+	// posx, posy, uvx, uvy
+	vertices := [?]f32 {
+		-1.0, -1.0, 0.0, 0.0,
+		1.0, -1.0, 1.0, 0.0,
+		1.0, 1.0, 1.0, 1.0,
+		-1.0, 1.0, 0.0, 1.0,
+	}
+
+	gl.GenVertexArrays(1, &quad.vao)
+	gl.GenBuffers(1, &quad.vbo)
+
+	gl.BindVertexArray(quad.vao)
+	gl.BindBuffer(gl.ARRAY_BUFFER, quad.vbo)
+	gl.BufferData(gl.ARRAY_BUFFER, size_of(vertices), &vertices[0], gl.STATIC_DRAW)
+
+	gl.EnableVertexAttribArray(0)
+	gl.VertexAttribPointer(0, 2, gl.FLOAT, gl.FALSE, 4 * size_of(f32), 0)
+
+	gl.EnableVertexAttribArray(1)
+	gl.VertexAttribPointer(1, 2, gl.FLOAT, gl.FALSE, 4 * size_of(f32), 2 * size_of(f32))
+
+	gl.BindVertexArray(0)
+
+	return quad
+}
+
+fullscreen_quad_deinit :: proc(quad: ^fullscreen_quad_t) {
+	gl.DeleteVertexArrays(1, &quad.vao)
+	gl.DeleteBuffers(1, &quad.vbo)
+}
+
+fullscreen_quad_draw :: proc(quad: ^fullscreen_quad_t, shader: ^shader_t) {
+	gl.UseProgram(shader.program)
+	gl.BindVertexArray(quad.vao)
+	gl.DrawArrays(gl.TRIANGLE_FAN, 0, 4)
+	gl.BindVertexArray(0)
 }

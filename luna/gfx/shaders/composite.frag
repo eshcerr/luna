@@ -6,7 +6,7 @@ out vec4 FragColor;
 
 uniform sampler2D u_color_tex;
 uniform sampler2D u_light_tex;
-uniform float u_ambient = 0.1; // ambient light, will surely change
+uniform float u_ambient = 1; // ambient light, will surely change
 
 void main() {
     vec4 color = texture(u_color_tex, v_uv);

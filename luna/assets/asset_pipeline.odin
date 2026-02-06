@@ -1,7 +1,7 @@
 package luna_assets
 
-import "core:image"
 import "core:fmt"
+import "core:image"
 import "core:os"
 import "core:path/slashpath"
 import "core:time"
@@ -35,24 +35,22 @@ asset_metadata_t :: struct {
 }
 
 asset_t :: struct {
-	metadata: asset_metadata_t,
-	id:            u32,
-	path:          string,
-	full_path:     string,
-	file_size:     i64,
-	modified:      time.Time,
-	loaded:        bool,
-	handle:        rawptr,
+	metadata:  asset_metadata_t,
+	id:        u32,
+	path:      string,
+	full_path: string,
+	file_size: i64,
+	modified:  time.Time,
+	loaded:    bool,
+	handle:    rawptr,
 }
 
 asset_file_t :: struct {
 	metadata: asset_metadata_t,
-	data: asset_data_t,
+	data:     asset_data_t,
 }
 
 asset_data_t :: union {
-	sprite_asset_t,
-	atlas_asset_t,
 }
 
 asset_manager_t :: struct {
@@ -93,7 +91,7 @@ asset_manager_deinit :: proc(manager: ^asset_manager_t) {
 			// do an array of proc to be called with a rawptr
 			// and call it from asset.type
 		}
-		delete(asset.tags)
+		delete(asset.metadata.tags)
 	}
 
 	delete(manager.assets)
@@ -167,17 +165,19 @@ asset_manager_register :: proc(
 	}
 
 	asset := asset_t {
-		id            = id,
-		name          = name,
-		path          = strings.clone(rel_path),
-		full_path     = strings.clone(full_path),
-		type          = asset_type,
-		editor_folder = folder,
-		tags          = make([dynamic]string),
-		file_size     = file_info.size,
-		modified      = file_info.modification_time,
-		loaded        = false,
-		handle        = nil,
+		metadata = asset_metadata_t {
+			tags = make([dynamic]string),
+			name = name,
+			type = asset_type,
+			editor_folder = folder,
+		},
+		id = id,
+		path = strings.clone(rel_path),
+		full_path = strings.clone(full_path),
+		file_size = file_info.size,
+		modified = file_info.modification_time,
+		loaded = false,
+		handle = nil,
 	}
 
 	manager.assets[id] = asset
@@ -190,10 +190,10 @@ asset_manager_register :: proc(
 		append(&manager.folder_index[folder], id)
 	}
 
-	if asset.type not_in manager.type_index {
-		manager.type_index[asset.type] = make([dynamic]u32)
+	if asset.metadata.type not_in manager.type_index {
+		manager.type_index[asset.metadata.type] = make([dynamic]u32)
 	}
-	append(&manager.type_index[asset.type], id)
+	append(&manager.type_index[asset.metadata.type], id)
 
 	return id
 }
@@ -243,11 +243,11 @@ asset_manager_add_tag :: proc(manager: ^asset_manager_t, asset_id: u32, tag: str
 	asset := asset_manager_get(manager, asset_id)
 	if asset == nil do return
 
-	for existing_tag in asset.tags {
+	for existing_tag in asset.metadata.tags {
 		if tag == existing_tag do return
 	}
 
-	append(&asset.tags, tag)
+	append(&asset.metadata.tags, tag)
 
 	if tag not_in manager.tags_index {
 		manager.tags_index[tag] = make([dynamic]u32)
@@ -259,10 +259,10 @@ asset_manager_remove_tag :: proc(manager: ^asset_manager_t, asset_id: u32, tag: 
 	asset := asset_manager_get(manager, asset_id)
 	if asset == nil do return
 
-	for t, i in asset.tags {
+	for t, i in asset.metadata.tags {
 		if t == tag {
-			delete(asset.tags[i])
-			ordered_remove(&asset.tags, i)
+			delete(asset.metadata.tags[i])
+			ordered_remove(&asset.metadata.tags, i)
 			break
 		}
 	}

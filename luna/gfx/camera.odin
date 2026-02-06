@@ -36,10 +36,3 @@ camera_projection :: proc(camera: ^camera_t) -> base.mat4 {
 
 	return ortho
 }
-
-camera_screen_to_world :: proc(camera: ^camera_t, screen_pos: base.ivec2) -> base.vec2 {
-	position :=
-		base.ivec2_to_vec2(screen_pos) / base.ivec2_to_vec2(pip.window_size) * camera.dimentions
-	position += -camera.dimentions / 2.0 + (camera.position * base.vec2{1, -1})
-	return position
-}

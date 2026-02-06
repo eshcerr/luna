@@ -244,9 +244,9 @@ inputs_update_mouse :: proc(window: glfw.WindowHandle) {
 	input.mouse.prev_mouse_pos_world = input.mouse.mouse_pos_world
 
 	input.mouse.mouse_pos = base.ivec2{i32(x), i32(y)}
-	input.mouse.mouse_pos_world = base.vec2_to_ivec2(
-		gfx.camera_screen_to_world(&gfx.pip.game_camera, input.mouse.mouse_pos),
-	)
+	//input.mouse.mouse_pos_world = base.vec2_to_ivec2(
+	//	gfx.camera_screen_to_world(&gfx.pip.game_camera, input.mouse.mouse_pos),
+	//)
 
 	input.mouse.delta = input.mouse.prev_mouse_pos - input.mouse.mouse_pos
 }

@@ -1,6 +1,7 @@
 package luna_editor
 
 import imgui "../../vendor/odin-imgui"
+import "../base"
 import "base:runtime"
 import "core:fmt"
 import "core:path/slashpath"
@@ -44,11 +45,13 @@ editor_deinit :: proc(editor: ^editor_t) {
 }
 
 editor_layout :: proc(editor: ^editor_t) {
+	if imgui.GetFrameCount() == 0 do return
 	viewport := imgui.GetMainViewport()
+
 	imgui.SetNextWindowPos(viewport.WorkPos)
 	imgui.SetNextWindowSize(viewport.WorkSize)
 	imgui.SetNextWindowViewport(viewport.ID_)
-
+	
 	window_flags: imgui.WindowFlags = {
 		.MenuBar,
 		.NoDocking,
@@ -112,7 +115,7 @@ editor_layout :: proc(editor: ^editor_t) {
 				editor.state.show_scene = !editor.state.show_scene
 			}
 			if imgui.MenuItem("assets", "") {
-				editor.state.show_assets = !editor.state.show_assets
+				//editor.state.show_assets = !editor.state.show_assets
 			}
 		}
 	}
@@ -147,9 +150,9 @@ editor_layout :: proc(editor: ^editor_t) {
 	if editor.state.show_scene {
 		editor_scene_window(editor)
 	}
-	if editor.state.show_assets {
-		editor_assets_window(editor)
-	}
+	//if editor.state.show_assets {
+	//	editor_assets_window(editor)
+	//}
 }
 
 editor_hierarchy_window :: proc(editor: ^editor_t) {
@@ -349,11 +352,11 @@ editor_draw_folder_tree :: proc(editor: ^editor_t) {
 		defer delete(folders_set)
 
 		for id, asset in manager.assets {
-			if asset.editor_folder != "" {
-				folders_set[asset.editor_folder] = true
+			if asset.metadata.editor_folder != "" {
+				folders_set[asset.metadata.editor_folder] = true
 
 				// Also add parent folders
-				parts := strings.split(asset.editor_folder, "/")
+				parts := strings.split(asset.metadata.editor_folder, "/")
 				defer delete(parts)
 
 				current := ""
@@ -496,7 +499,7 @@ editor_draw_asset_grid :: proc(editor: ^editor_t) {
 		defer delete(tags)
 
 		for id, asset in manager.assets {
-			for tag in asset.tags {
+			for tag in asset.metadata.tags {
 				tags[tag] = true
 			}
 		}
@@ -514,18 +517,21 @@ editor_draw_asset_grid :: proc(editor: ^editor_t) {
 	defer delete(assets_to_display)
 
 	for id, asset in manager.assets {
-		if asset.editor_folder != editor.ctx.selected_asset_folder do continue
+		if asset.metadata.editor_folder != editor.ctx.selected_asset_folder do continue
 
 		search_text := string(cstring(raw_data(&editor.ctx.asset_search)))
 		if search_text != "" {
-			if !strings.contains(strings.to_lower(asset.name), strings.to_lower(search_text)) {
+			if !strings.contains(
+				strings.to_lower(asset.metadata.name),
+				strings.to_lower(search_text),
+			) {
 				continue
 			}
 		}
 
 		if editor.ctx.asset_tag_filter != "" {
 			has_tag := false
-			for tag in asset.tags {
+			for tag in asset.metadata.tags {
 				if tag == editor.ctx.asset_tag_filter {
 					has_tag = true
 					break
@@ -580,7 +586,7 @@ editor_draw_asset_grid :: proc(editor: ^editor_t) {
 				imgui.Vec2{icon_size, icon_size},
 			) {
 				editor.ctx.selected_asset_id = asset_id
-				fmt.println("selected asset:", asset.name)
+				fmt.println("selected asset:", asset.metadata.name)
 			}
 
 			if imgui.IsItemHovered() && imgui.IsMouseDoubleClicked(.Left) {
@@ -591,14 +597,14 @@ editor_draw_asset_grid :: proc(editor: ^editor_t) {
 				defer imgui.EndDragDropSource()
 
 				imgui.SetDragDropPayload("ASSET_ID", &asset_id, size_of(u32), {})
-				imgui.Text("dragging: %s", strings.clone_to_cstring(asset.name))
+				imgui.Text("dragging: %s", strings.clone_to_cstring(asset.metadata.name))
 			}
 
 			draw_list := imgui.GetWindowDrawList()
 			p := imgui.GetItemRectMin()
 
 			color: u32
-			#partial switch asset.type {
+			#partial switch asset.metadata.type {
 			case .IMAGE:
 				color = imgui.GetColorU32ImVec4(imgui.Vec4{1.0, 0.3, 0.6, 1.0})
 			case .SPRITE:
@@ -631,20 +637,20 @@ editor_draw_asset_grid :: proc(editor: ^editor_t) {
 			imgui.PushTextWrapPos(imgui.GetCursorPosX() + icon_size)
 
 			// Truncate long names
-			display_name := asset.name[:(min(len(asset.name), 22))]
+			display_name := asset.metadata.name[:(min(len(asset.metadata.name), 22))]
 			imgui.Text(strings.clone_to_cstring(display_name))
 
 			imgui.PopTextWrapPos()
 
 			if imgui.IsItemHovered() {
-				imgui.SetTooltip(strings.clone_to_cstring(asset.name))
+				imgui.SetTooltip(strings.clone_to_cstring(asset.metadata.name))
 			}
 
-			if len(asset.tags) > 0 {
+			if len(asset.metadata.tags) > 0 {
 				imgui.PushStyleColorImVec4(.Text, imgui.Vec4{0.6, 0.6, 0.6, 1.0})
 				defer imgui.PopStyleColor()
 
-				tags_str := strings.join(asset.tags[:], ", ")
+				tags_str := strings.join(asset.metadata.tags[:], ", ")
 				defer delete(tags_str)
 
 				imgui.TextWrapped(strings.clone_to_cstring(fmt.tprintf("[%s]", tags_str)))
@@ -674,10 +680,10 @@ editor_draw_asset_grid :: proc(editor: ^editor_t) {
 					}
 				}
 
-				if len(asset.tags) > 0 && imgui.BeginMenu("Remove Tag") {
+				if len(asset.metadata.tags) > 0 && imgui.BeginMenu("Remove Tag") {
 					defer imgui.EndMenu()
 
-					for tag in asset.tags {
+					for tag in asset.metadata.tags {
 						if imgui.MenuItem(strings.clone_to_cstring(tag)) {
 							assets.asset_manager_remove_tag(manager, asset_id, tag)
 						}
